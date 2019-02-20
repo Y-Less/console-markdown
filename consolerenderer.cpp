@@ -397,8 +397,6 @@ void rndr_hrule(struct buf *ob, void *opaque)
 	return ret;
 }
 
-#pragma once
-
 void cmdmd::Init()
 {
 	ColouredBuffer<char>::StandardInstall();
