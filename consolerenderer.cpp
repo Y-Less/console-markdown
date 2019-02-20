@@ -7,6 +7,9 @@ extern "C"
 #include <iostream>
 #include <string>
 
+#include "ColouredBuffer.hpp"
+#include "include/CMDMD/CMDMD.hpp"
+
 #include "parsers/cpp.hpp"
 #include "parsers/pawn.hpp"
 
@@ -177,7 +180,7 @@ static void
 	{
 		if (ob->size)
 		{
-			bufputc(ob, '\n');
+			BUFPUTSL(ob, "\n");
 		}
 		bufput(ob, text->data, text->size);
 	}
@@ -304,11 +307,25 @@ static int
 
 void rndr_hrule(struct buf *ob, void *opaque)
 {
-	BUFPUTSL(ob, "\x1B[47;37m                                                                                \x1B[0m");
+	if (ob->size)
+	{
+		BUFPUTSL(ob, "\n");
+	}
+	BUFPUTSL(ob, "\x1B[47;37m                                                                                \x1B[0m\n");
 }
 
 /* exported renderer structures */
-void WriteMD(char const * str)
+::std::string cmdmd::Render(std::string const & input)
+{
+	return cmdmd::Render(input.c_str(), input.length());
+}
+
+::std::string cmdmd::Render(char const * input)
+{
+	return cmdmd::Render(input, strlen(input));
+}
+
+::std::string cmdmd::Render(char const * input, size_t len)
 {
 	static const struct mkd_renderer
 		consoleRenderer =
@@ -351,8 +368,8 @@ void WriteMD(char const * str)
 	buf
 		* ob = bufnew(64),
 		ib = {
-			const_cast<char *>(str),
-			strlen(str),
+			const_cast<char *>(input),
+			len,
 			0,
 			0,
 			0xFFFF
@@ -369,10 +386,22 @@ void WriteMD(char const * str)
 	//consoleRenderer.opaque = reinterpret_cast<void *>(out);
 	markdown(ob, &ib, &consoleRenderer);
 
-	::std::cout.write(ob->data, ob->size);
+	//::std::cout.write(ob->data, ob->size);
+	::std::string
+		ret(ob->data, ob->size);
 
 	/* cleanup */
 	//bufrelease(ib);
 	bufrelease(ob);
+
+	return ret;
+}
+
+#pragma once
+
+void cmdmd::Init()
+{
+	ColouredBuffer<char>::StandardInstall();
+	ColouredBuffer<wchar_t>::StandardInstall();
 }
 

@@ -1,13 +1,10 @@
-#include "libsoldout/markdown.h"
-#include "ColouredBuffer.hpp"
-
-void DumpColouredBufferExamples();
-void WriteMD(char const * str);
+#include "include/CMDMD/CMDMD.hpp"
+#include <iostream>
 
 int main()
 {
-	ColouredBuffer<char>::StandardInstall();
-	ColouredBuffer<wchar_t>::StandardInstall();
+	//ColouredBuffer<char>::StandardInstall();
+	//ColouredBuffer<wchar_t>::StandardInstall();
 	//DumpColouredBufferExamples();
 
 	//std::cout << "**bold**, _italic_" << std::endl;
@@ -28,12 +25,13 @@ int main()
 	//std::cout << "\x1B[31;1mHeading 4\x1B[0m, _italic_" << std::endl;
 
 
+	cmdmd::Init();
 
-
-	WriteMD(R"(
+	std::cout << cmdmd::Render(R"(
+____
   
 # Heading 1
-**hello** Alex _Y-Less_ Cole  
+**hello** _there_ 
 
 ## Heading 2
 ### Heading 3
