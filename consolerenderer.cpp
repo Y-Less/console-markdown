@@ -6,97 +6,29 @@ extern "C"
 #include <stack>
 #include <iostream>
 
-/********************
-* GENERIC RENDERER *
-********************/
-
-class CMDMDStack
+static int RenderMarkdown(void * opaque, char const * style, struct buf const * text)
 {
-private:
-	::std::ostream & out_;
-
-	::std::stack<char const *> styles_;
-
-public:
-	CMDMDStack(::std::ostream & out)
-	:
-		out_(out),
-		styles_()
+	if (text && text->size)
 	{
-		// Default colours.
-		Push("\x1B[0m");
+		::std::ostream &
+			out = *reinterpret_cast<::std::ostream *>(opaque);
+		out << style;
+		out.write(text->data, text->size);
+		out << "\x1B[0m";
 	}
+	return 0;
+}
 
-	~CMDMDStack()
-	{
-		// Reset.
-		out_ << "\x1B[0m";
-	}
-
-	void Push(char const * style)
-	{
-		out_ << style;
-		styles_.push(style);
-	}
-
-	void Pop()
-	{
-		styles_.pop();
-		out_ << styles_.top();
-	}
-
-	inline int operator()(struct buf *text)
-	{
-		if (text && text->size)
-		{
-			out_.write(text->data, text->size);
-		}
-		return 0;
-	}
-};
-
-class CMDMD
+static int RenderMarkdown(void * opaque, struct buf const * text)
 {
-private:
-	CMDMDStack &
-		stack_;
-
-public:
-	CMDMD(char const * style, void * stack)
-	:
-		stack_(*reinterpret_cast<CMDMDStack *>(stack))
+	if (text && text->size)
 	{
-		stack_.Push(style);
+		::std::ostream &
+			out = *reinterpret_cast<::std::ostream *>(opaque);
+		out.write(text->data, text->size);
 	}
-	~CMDMD()
-	{
-		stack_.Pop();
-	}
-
-	inline int operator()(struct buf *text)
-	{
-		return stack_(text);
-	}
-};
-
-class CMDTX
-{
-private:
-	CMDMDStack &
-		stack_;
-
-public:
-	CMDTX(void * stack)
-	:
-		stack_(*reinterpret_cast<CMDMDStack *>(stack))
-	{
-	}
-
-	inline int operator()(struct buf *text)
-	{
-		return stack_(text);
-	}
-};
+	return 0;
+}
 
 /*static void
 	rndr_fencedcode(struct buf *ob, struct buf *text, void *opaque)
@@ -144,22 +76,14 @@ static int
 	rndr_double_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
 	// Double `*` or `_` is `__bold__`.
-	if (!text || !text->size)
-	{
-		return 0;
-	}
-	return CMDMD("\x1B[5;47;30m", opaque)(text);
+	return RenderMarkdown(opaque, "\x1B[5;47;30m", text);
 }
 
 static int
 	rndr_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
 	// Single `*` or `_` is `*italic*`.
-	if (!text || !text->size)
-	{
-		return 0;
-	}
-	return CMDMD("\x1B[37;1m", opaque)(text);
+	return RenderMarkdown(opaque, "\x1B[37;1m", text);
 }
 
 /*static void
@@ -232,7 +156,7 @@ static void
 static void
 	rndr_normal_text(struct buf *ob, struct buf *text, void *opaque)
 {
-	CMDTX(opaque)(text);
+	RenderMarkdown(opaque, text);
 }
 
 /*static void
@@ -326,8 +250,8 @@ void WriteMD(char const * str)
 			"*_",
 			NULL
 		};
-	CMDMDStack
-		stack(::std::cout);
+	::std::ostream *
+		out = &::std::cout;
 	buf
 		* ob = bufnew(64),
 		ib = {
@@ -346,7 +270,7 @@ void WriteMD(char const * str)
 	//		"out of %zu\n",
 	//		ret,
 	//		ob->size);
-	consoleRenderer.opaque = reinterpret_cast<void *>(&stack);
+	consoleRenderer.opaque = reinterpret_cast<void *>(out);
 	markdown(ob, &ib, &consoleRenderer);
 
 	/* cleanup */
