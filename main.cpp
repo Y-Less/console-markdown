@@ -59,7 +59,7 @@ hook OnPlayerConnect(playerid)
 * Three
 * Four
 
-I hope you are OK
+I hope you are OK, like `someCode()` is.
 
 1. One
 2. One

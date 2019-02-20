@@ -14,48 +14,17 @@ static int RenderMarkdown(struct buf * ob, char const * style, struct buf const 
 {
 	if (text && text->size)
 	{
-		//::std::ostream &
-		//	out = *reinterpret_cast<::std::ostream *>(opaque);
-		//out << style;
 		size_t
 			len = strlen(style);
 		bufput(ob, style, len);
 		bufput(ob, text->data, text->size);
 		BUFPUTSL(ob, "\x1B[0m");
-		// `4` for `strlen("\x1B[0m")`;
-		//return len + text->size + 4;
-		return 1;
-	}
-	return 0;
-}
-
-static int RenderText(struct buf * ob, struct buf const * text)
-{
-	if (text && text->size)
-	{
-		bufput(ob, text->data, text->size);
-		//return text->size;
 		return 1;
 	}
 	return 0;
 }
 
 /*static void
-	rndr_fencedcode(struct buf *ob, struct buf *text, void *opaque)
-{
-	if (ob->size)
-	{
-		bufputc(ob, '\n');
-	}
-	BUFPUTSL(ob, "<pre><code>");
-	if (text)
-	{
-		lus_body_escape(ob, text->data, text->size);
-	}
-	BUFPUTSL(ob, "</code></pre>\n");
-}
-
-static void
 	rndr_blockquote(struct buf *ob, struct buf *text, void *opaque)
 {
 	if (ob->size)
@@ -68,19 +37,19 @@ static void
 		bufput(ob, text->data, text->size);
 	}
 	BUFPUTSL(ob, "</blockquote>\n");
-}
+}*/
 
 static int
 	rndr_codespan(struct buf *ob, struct buf *text, void *opaque)
 {
-	BUFPUTSL(ob, "<code>");
 	if (text)
 	{
-		lus_body_escape(ob, text->data, text->size);
+		BUFPUTSL(ob, "\x1B[47;30m");
+		bufput(ob, text->data, text->size);
+		BUFPUTSL(ob, "\x1B[0m");
 	}
-	BUFPUTSL(ob, "</code>");
 	return 1;
-}*/
+}
 
 static int
 	rndr_double_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
@@ -204,7 +173,6 @@ static void
 static void
 	rndr_list(struct buf *ob, struct buf *text, int *flags, void *opaque)
 {
-	//bufput(ob, (flags & MKD_LIST_ORDERED) ? "<ol>\n" : "<ul>\n", 5);
 	if (text)
 	{
 		if (ob->size)
@@ -213,8 +181,6 @@ static void
 		}
 		bufput(ob, text->data, text->size);
 	}
-	printf("a flags %d", *flags);
-	//bufput(ob, (flags & MKD_LIST_ORDERED) ? "</ol>\n" : "</ul>\n", 6);
 }
 
 static void
@@ -262,19 +228,19 @@ static void
 static void
 	rndr_normal_text(struct buf *ob, struct buf *text, void *opaque)
 {
-	RenderText(ob, text);
+	bufput(ob, text->data, text->size);
 }
 
 static void
 	null_block(struct buf *ob, struct buf *text, void *opaque)
 {
-	RenderText(ob, text);
+	bufput(ob, text->data, text->size);
 }
 
 static int
 	null_span(struct buf *ob, struct buf *text, void *opaque)
 {
-	RenderText(ob, text);
+	bufput(ob, text->data, text->size);
 	return 1;
 }
 
@@ -338,7 +304,7 @@ static int
 
 void rndr_hrule(struct buf *ob, void *opaque)
 {
-	BUFPUTSL(ob, "--------------------------------------------------------------------------------");
+	BUFPUTSL(ob, "\x1B[47;37m                                                                                \x1B[0m");
 }
 
 /* exported renderer structures */
@@ -351,20 +317,20 @@ void WriteMD(char const * str)
 			NULL,
 
 			rndr_blockcode,//NULL,
-			rndr_fencedcode, //rndr_fencedcode,
+			rndr_fencedcode,
 			null_block,//NULL, //discount_blockquote,
 			null_block,//NULL, //rndr_raw_block,
-			rndr_header, //rndr_header,
-			rndr_hrule, //html_hrule,
+			rndr_header,
+			rndr_hrule,
 			rndr_list,
 			rndr_listitem,
-			rndr_paragraph,//NULL, //rndr_paragraph,
+			rndr_paragraph,
 			NULL, //discount_table,
 			NULL, //discount_table_cell,
 			NULL, //discount_table_row,
 
 			NULL,
-			NULL, //rndr_codespan,
+			rndr_codespan,
 			rndr_double_emphasis,
 			rndr_emphasis,
 			NULL, //html_discount_image,
