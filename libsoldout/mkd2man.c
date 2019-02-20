@@ -187,6 +187,7 @@ static struct mkd_renderer to_man = {
 
 	/* block-level callbacks */
 	man_blockcode,
+	NULL,
 	man_blockquote,
 	NULL,
 	man_header,

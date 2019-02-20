@@ -233,6 +233,7 @@ const struct mkd_renderer mkd_html = {
 	NULL,
 
 	rndr_blockcode,
+	NULL,
 	rndr_blockquote,
 	rndr_raw_block,
 	rndr_header,
@@ -299,6 +300,7 @@ const struct mkd_renderer mkd_xhtml = {
 	NULL,
 
 	rndr_blockcode,
+	NULL,
 	rndr_blockquote,
 	rndr_raw_block,
 	rndr_header,
@@ -493,6 +495,7 @@ const struct mkd_renderer discount_html = {
 	NULL,
 
 	rndr_blockcode,
+	NULL,
 	discount_blockquote,
 	rndr_raw_block,
 	rndr_header,
@@ -525,6 +528,7 @@ const struct mkd_renderer discount_xhtml = {
 	NULL,
 
 	rndr_blockcode,
+	NULL,
 	discount_blockquote,
 	rndr_raw_block,
 	rndr_header,
@@ -637,6 +641,7 @@ const struct mkd_renderer nat_html = {
 	NULL,
 
 	rndr_blockcode,
+	NULL,
 	discount_blockquote,
 	rndr_raw_block,
 	nat_header,
@@ -669,6 +674,7 @@ const struct mkd_renderer nat_xhtml = {
 	NULL,
 
 	rndr_blockcode,
+	NULL,
 	discount_blockquote,
 	rndr_raw_block,
 	nat_header,

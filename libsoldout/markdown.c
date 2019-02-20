@@ -921,6 +921,16 @@ prefix_code(char *data, size_t size) {
 			&& data[2] == ' ' && data[3] == ' ') return 4;
 	return 0; }
 
+/* prefix_fenced • returns prefix length for fenced code */
+static size_t
+prefix_fenced(char *data, size_t size) {
+	size_t i = 3;
+	if (size < 3 || data[0] != '`' || data[1] != '`'
+			|| data[2] != '`') return 0;
+	while (i < size && data[i] != '\n' && data[i] != '\r')
+		i += 1;
+	return i; }
+
 /* prefix_oli • returns ordered list item prefix */
 static size_t
 prefix_oli(char *data, size_t size) {
@@ -1080,6 +1090,40 @@ parse_blockcode(struct buf *ob, struct render *rndr,
 	bufputc(work, '\n');
 	if (rndr->make.blockcode)
 		rndr->make.blockcode(ob, work, rndr->make.opaque);
+	release_work_buffer(rndr, work);
+	return beg; }
+
+
+/* parse_fencedcode • handles parsing of a fenced code fragment */
+static size_t
+parse_fencedcode(struct buf *ob, struct render *rndr,
+			char *data, size_t size) {
+	size_t beg, end, namelen;
+	char *name = data + 3;
+	struct buf *work = new_work_buffer(rndr);
+
+	beg = prefix_fenced(data, size);
+	namelen = beg - 3;
+	while (beg < size && (data[beg] == '\n' || data[beg] == '\r'))
+		beg += 1;
+	while (beg < size) {
+		for (end = beg + 1; end < size && data[end - 1] != '\n';
+							end += 1);
+		if (prefix_fenced(data + beg, end - beg))
+			/* end of code prefix */
+			break;
+		/* verbatim copy to the working buffer,
+			escaping entities */
+		if (is_empty(data + beg, end - beg))
+			bufputc(work, '\n');
+		else bufput(work, data + beg, end - beg); }
+		beg = end; }
+
+	while (work->size && work->data[work->size - 1] == '\n')
+		work->size -= 1;
+	bufputc(work, '\n');
+	if (rndr->make.fencedcode)
+		rndr->make.fencedcode(ob, work, name, namelen, rndr->make.opaque);
 	release_work_buffer(rndr, work);
 	return beg; }
 
@@ -1549,6 +1593,8 @@ parse_block(struct buf *ob, struct render *rndr,
 			beg += parse_blockquote(ob, rndr, txt_data, end);
 		else if (prefix_code(txt_data, end))
 			beg += parse_blockcode(ob, rndr, txt_data, end);
+		else if (prefix_fenced(txt_data, end))
+			beg += parse_fencedcode(ob, rndr, txt_data, end);
 		else if (prefix_uli(txt_data, end))
 			beg += parse_list(ob, rndr, txt_data, end, 0);
 		else if (prefix_oli(txt_data, end))
