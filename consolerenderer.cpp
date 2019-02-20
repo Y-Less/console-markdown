@@ -1,8 +1,47 @@
 #include "libsoldout/markdown.h"
 
+#include <stack>
+#include <ostream>
+
 /********************
 * GENERIC RENDERER *
 ********************/
+
+class CMDMD
+{
+private:
+	::std::ostream & out_;
+
+	::std::stack<char const *> styles_;
+
+public:
+	CMDMD(::std::ostream & out)
+	:
+		out_(out),
+		styles_()
+	{
+		// Default colours.
+		Push("\x1B[0m");
+	}
+
+	~CMDMD()
+	{
+		// Reset.
+		out_ << "\x1B[0m";
+	}
+
+	void Push(char const * style)
+	{
+		out_ << style;
+		styles_.push(style);
+	}
+
+	void Pop()
+	{
+		styles_.pop();
+		out_ << styles_.top();
+	}
+};
 
 static int
 	rndr_autolink(struct buf *ob, struct buf *link, enum mkd_autolink type, void *opaque)
@@ -75,7 +114,14 @@ static int
 static int
 	rndr_double_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
+	CMDMD *
+		styles = (cmdmd_s *)opaque;
+	// Double `*` or `_` is `__bold__`.
 	if (!text || !text->size)
+	{
+		return 0;
+	}
+	if (c != '*')
 	{
 		return 0;
 	}
@@ -88,6 +134,7 @@ static int
 static int
 	rndr_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
+	// Single `*` or `_` is `*italic*`.
 	if (!text || !text->size)
 	{
 		return 0;
@@ -229,7 +276,7 @@ static int
 	return 1;
 }
 
-static int
+/*static int
 	rndr_triple_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
 	if (!text || !text->size)
@@ -240,7 +287,7 @@ static int
 	bufput(ob, text->data, text->size);
 	BUFPUTSL(ob, "</em></strong>");
 	return 1;
-}
+}*/
 
 /* exported renderer structures */
 const struct mkd_renderer gConsoleRenderer =
@@ -269,7 +316,7 @@ const struct mkd_renderer gConsoleRenderer =
 	html_linebreak,
 	discount_link,
 	rndr_raw_inline,
-	rndr_triple_emphasis,
+	NULL, //rndr_triple_emphasis,
 
 	NULL,
 	rndr_normal_text,
