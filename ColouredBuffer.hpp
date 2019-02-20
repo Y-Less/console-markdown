@@ -18,46 +18,6 @@ public:
 	static void StandardInstall();
 
 private:
-	template <typename U>
-	static inline U const * wstrchr(U const * s, U const n)
-	{
-		return nullptr;
-	}
-
-	template <>
-	static inline char const * wstrchr<char>(char const * s, char const n)
-	{
-		return strchr(s, n);
-	}
-
-	template <>
-	static inline wchar_t const * wstrchr<wchar_t>(wchar_t const * s, wchar_t const n)
-	{
-		return wcschr(s, n);
-	}
-
-	template <typename U>
-	static inline ::std::streamsize wstrout(::std::basic_streambuf<U> & buffer, char const * s)
-	{
-		return 0;
-	}
-
-	template <>
-	static inline ::std::streamsize wstrout(::std::basic_streambuf<char> & buffer, char const * s)
-	{
-		return buffer.sputn(s, strlen(s));
-	}
-
-	template <>
-	static inline ::std::streamsize wstrout(::std::basic_streambuf<wchar_t> & buffer, char const * s)
-	{
-		wchar_t w[12];
-		size_t conv;
-		mbstowcs_s(&conv, w, 12, s, 12);
-		return buffer.sputn(w, wcslen(w));
-	}
-
-private:
 	bool const
 		coloured_;
 
@@ -97,6 +57,10 @@ private:
 		buffer_;
 
 	ColouredBuffer() = delete;
+
+	char_type const * wstrchr(char_type const * s, char_type const n);
+
+	::std::streamsize wstrout(char const * s);
 
 #ifdef CONMD_WINDOWS
 	ostream_type *
@@ -182,7 +146,7 @@ private:
 		if (backout[0])
 		{
 			Colour();
-			wstrout<C>(buffer_, backout);
+			wstrout(backout);
 		}
 		state_ = STATE_NONE;
 		attr0_ = attr1_ = attr2_ = attr3_ = 0;
@@ -641,7 +605,7 @@ xsputn_loop_done:
 			}
 			else
 			{
-				esc = wstrchr<C>(s, '\x1B');
+				esc = wstrchr(s, '\x1B');
 				if (esc == nullptr)
 					break;
 				state_ = STATE_ESC;
@@ -715,5 +679,36 @@ void
 	new ColouredBuffer<wchar_t>(::std::wcout, true);
 	new ColouredBuffer<wchar_t>(::std::wcerr, true);
 #endif
+}
+
+char const *
+	ColouredBuffer<char>::
+	wstrchr(char const * s, char const n)
+{
+	return strchr(s, n);
+}
+
+wchar_t const *
+	ColouredBuffer<wchar_t>::
+	wstrchr(wchar_t const * s, wchar_t const n)
+{
+	return wcschr(s, n);
+}
+
+::std::streamsize
+	ColouredBuffer<char>::
+	wstrout(char const * s)
+{
+	return buffer_.sputn(s, strlen(s));
+}
+
+::std::streamsize
+	ColouredBuffer<wchar_t>::
+	wstrout(char const * s)
+{
+	wchar_t w[12];
+	size_t conv;
+	mbstowcs_s(&conv, w, 12, s, 12);
+	return buffer_.sputn(w, wcslen(w));
 }
 
