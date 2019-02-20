@@ -1,13 +1,16 @@
-#include "libsoldout/markdown.h"
+extern "C"
+{
+	#include "libsoldout/markdown.h"
+}
 
 #include <stack>
-#include <ostream>
+#include <iostream>
 
 /********************
 * GENERIC RENDERER *
 ********************/
 
-class CMDMD
+class CMDMDStack
 {
 private:
 	::std::ostream & out_;
@@ -15,7 +18,7 @@ private:
 	::std::stack<char const *> styles_;
 
 public:
-	CMDMD(::std::ostream & out)
+	CMDMDStack(::std::ostream & out)
 	:
 		out_(out),
 		styles_()
@@ -24,7 +27,7 @@ public:
 		Push("\x1B[0m");
 	}
 
-	~CMDMD()
+	~CMDMDStack()
 	{
 		// Reset.
 		out_ << "\x1B[0m";
@@ -41,36 +44,62 @@ public:
 		styles_.pop();
 		out_ << styles_.top();
 	}
-};
 
-static int
-	rndr_autolink(struct buf *ob, struct buf *link, enum mkd_autolink type, void *opaque)
-{
-	if (!link || !link->size)
+	inline int operator()(struct buf *text)
 	{
+		if (text && text->size)
+		{
+			out_.write(text->data, text->size);
+		}
 		return 0;
 	}
-	BUFPUTSL(ob, "<a href=\"");
-	if (type == MKDA_IMPLICIT_EMAIL)
-	{
-		BUFPUTSL(ob, "mailto:");
-	}
-	lus_attr_escape(ob, link->data, link->size);
-	BUFPUTSL(ob, "\">");
-	if (type == MKDA_EXPLICIT_EMAIL && link->size > 7)
-	{
-		lus_body_escape(ob, link->data + 7, link->size - 7);
-	}
-	else
-	{
-		lus_body_escape(ob, link->data, link->size);
-	}
-	BUFPUTSL(ob, "</a>");
-	return 1;
-}
+};
 
-static void
-	rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
+class CMDMD
+{
+private:
+	CMDMDStack &
+		stack_;
+
+public:
+	CMDMD(char const * style, void * stack)
+	:
+		stack_(*reinterpret_cast<CMDMDStack *>(stack))
+	{
+		stack_.Push(style);
+	}
+	~CMDMD()
+	{
+		stack_.Pop();
+	}
+
+	inline int operator()(struct buf *text)
+	{
+		return stack_(text);
+	}
+};
+
+class CMDTX
+{
+private:
+	CMDMDStack &
+		stack_;
+
+public:
+	CMDTX(void * stack)
+	:
+		stack_(*reinterpret_cast<CMDMDStack *>(stack))
+	{
+	}
+
+	inline int operator()(struct buf *text)
+	{
+		return stack_(text);
+	}
+};
+
+/*static void
+	rndr_fencedcode(struct buf *ob, struct buf *text, void *opaque)
 {
 	if (ob->size)
 	{
@@ -109,26 +138,17 @@ static int
 	}
 	BUFPUTSL(ob, "</code>");
 	return 1;
-}
+}*/
 
 static int
 	rndr_double_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
-	CMDMD *
-		styles = (cmdmd_s *)opaque;
 	// Double `*` or `_` is `__bold__`.
 	if (!text || !text->size)
 	{
 		return 0;
 	}
-	if (c != '*')
-	{
-		return 0;
-	}
-	BUFPUTSL(ob, "<strong>");
-	bufput(ob, text->data, text->size);
-	BUFPUTSL(ob, "</strong>");
-	return 1;
+	return CMDMD("\x1B[5;47;30m", opaque)(text);
 }
 
 static int
@@ -139,16 +159,10 @@ static int
 	{
 		return 0;
 	}
-	BUFPUTSL(ob, "<em>");
-	if (text)
-	{
-		bufput(ob, text->data, text->size);
-	}
-	BUFPUTSL(ob, "</em>");
-	return 1;
+	return CMDMD("\x1B[37;1m", opaque)(text);
 }
 
-static void
+/*static void
 	rndr_header(struct buf *ob, struct buf *text, int level, void *opaque)
 {
 	if (ob->size)
@@ -213,18 +227,15 @@ static void
 		bufput(ob, text->data, text->size);
 	}
 	BUFPUTSL(ob, "</li>\n");
-}
+}*/
 
 static void
 	rndr_normal_text(struct buf *ob, struct buf *text, void *opaque)
 {
-	if (text)
-	{
-		lus_body_escape(ob, text->data, text->size);
-	}
+	CMDTX(opaque)(text);
 }
 
-static void
+/*static void
 	rndr_paragraph(struct buf *ob, struct buf *text, void *opaque)
 {
 	if (ob->size)
@@ -274,55 +285,72 @@ static int
 {
 	bufput(ob, text->data, text->size);
 	return 1;
-}
-
-/*static int
-	rndr_triple_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
-{
-	if (!text || !text->size)
-	{
-		return 0;
-	}
-	BUFPUTSL(ob, "<strong><em>");
-	bufput(ob, text->data, text->size);
-	BUFPUTSL(ob, "</em></strong>");
-	return 1;
 }*/
 
 /* exported renderer structures */
-const struct mkd_renderer gConsoleRenderer =
+void WriteMD(char const * str)
 {
-	NULL,
-	NULL,
+	static struct mkd_renderer
+		consoleRenderer =
+		{
+			NULL,
+			NULL,
 
-	rndr_blockcode,
-	NULL,
-	discount_blockquote,
-	rndr_raw_block,
-	rndr_header,
-	html_hrule,
-	rndr_list,
-	rndr_listitem,
-	rndr_paragraph,
-	discount_table,
-	discount_table_cell,
-	discount_table_row,
+			NULL,
+			NULL, //rndr_fencedcode,
+			NULL, //discount_blockquote,
+			NULL, //rndr_raw_block,
+			NULL, //rndr_header,
+			NULL, //html_hrule,
+			NULL, //rndr_list,
+			NULL, //rndr_listitem,
+			NULL, //rndr_paragraph,
+			NULL, //discount_table,
+			NULL, //discount_table_cell,
+			NULL, //discount_table_row,
 
-	rndr_autolink,
-	rndr_codespan,
-	rndr_double_emphasis,
-	rndr_emphasis,
-	html_discount_image,
-	html_linebreak,
-	discount_link,
-	rndr_raw_inline,
-	NULL, //rndr_triple_emphasis,
+			NULL,
+			NULL, //rndr_codespan,
+			rndr_double_emphasis,
+			rndr_emphasis,
+			NULL, //html_discount_image,
+			NULL, //html_linebreak,
+			NULL, //discount_link,
+			NULL, //rndr_raw_inline,
+			NULL, //rndr_triple_emphasis,
 
-	NULL,
-	rndr_normal_text,
+			NULL,
+			rndr_normal_text,
 
-	64,
-	"*_",
-	NULL
-};
+			64,
+			"*_",
+			NULL
+		};
+	CMDMDStack
+		stack(::std::cout);
+	buf
+		* ob = bufnew(64),
+		ib = {
+			const_cast<char *>(str),
+			strlen(str),
+			0,
+			0,
+			0xFFFF
+		};
+	//markdown(ob, ib, &to_man);
+
+	/* writing the result to stdout */
+	//ret = fwrite(ob->data, 1, ob->size, stdout);
+	//if (ret < ob->size)
+	//	fprintf(stderr, "Warning: only %zu output byte written, "
+	//		"out of %zu\n",
+	//		ret,
+	//		ob->size);
+	consoleRenderer.opaque = reinterpret_cast<void *>(&stack);
+	markdown(ob, &ib, &consoleRenderer);
+
+	/* cleanup */
+	//bufrelease(ib);
+	bufrelease(ob);
+}
 

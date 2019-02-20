@@ -127,7 +127,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ColouredBuffer.cpp" />
-    <ClCompile Include="consolerenderer.c" />
+    <ClCompile Include="consolerenderer.cpp" />
     <ClCompile Include="libsoldout\array.c" />
     <ClCompile Include="libsoldout\buffer.c" />
     <ClCompile Include="libsoldout\markdown.c" />
