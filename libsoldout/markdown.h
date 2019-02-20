@@ -48,9 +48,9 @@ struct mkd_renderer {
 	void (*header)(struct buf *ob, struct buf *text,
 						int level, void *opaque);
 	void (*hrule)(struct buf *ob, void *opaque);
-	void (*list)(struct buf *ob, struct buf *text, int flags, void *opaque);
+	void (*list)(struct buf *ob, struct buf *text, int *flags, void *opaque);
 	void (*listitem)(struct buf *ob, struct buf *text,
-						int flags, void *opaque);
+						int *flags, void *opaque);
 	void (*paragraph)(struct buf *ob, struct buf *text, void *opaque);
 	void (*table)(struct buf *ob, struct buf *head_row, struct buf *rows,
 							void *opaque);

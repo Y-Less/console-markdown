@@ -87,6 +87,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -95,6 +96,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -105,6 +107,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -119,6 +122,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -127,18 +131,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ColouredBuffer.cpp" />
-    <ClCompile Include="consolerenderer.cpp" />
+    <ClCompile Include="ConsoleRenderer.cpp" />
     <ClCompile Include="libsoldout\array.c" />
     <ClCompile Include="libsoldout\buffer.c" />
     <ClCompile Include="libsoldout\markdown.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="parsers\cpp.cpp" />
+    <ClCompile Include="parsers\pawn.cpp" />
+    <ClCompile Include="StringUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ColouredBuffer.hpp" />
     <ClInclude Include="libsoldout\array.h" />
     <ClInclude Include="libsoldout\buffer.h" />
     <ClInclude Include="libsoldout\markdown.h" />
+    <ClInclude Include="parsers\cpp.hpp" />
+    <ClInclude Include="parsers\pawn.hpp" />
     <ClInclude Include="strings.h" />
+    <ClInclude Include="StringUtils.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
