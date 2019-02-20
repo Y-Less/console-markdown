@@ -656,59 +656,15 @@ xsputn_loop_done:
 #endif
 };
 
+#ifdef CONMD_WINDOWS
+	#pragma warning(push)
+	#pragma warning(disable: 4661)
+#endif
+
 template class ColouredBuffer<char>;
 template class ColouredBuffer<wchar_t>;
 
-void
-	ColouredBuffer<char>::
-	StandardInstall()
-{
-#ifdef WIN32
-	// Redirect `stdout` via us.
-	new ColouredBuffer<char>(::std::cout, true);
-	new ColouredBuffer<char>(::std::cerr, true);
+#ifdef CONMD_WINDOWS
+	//#pragma warning(pop)
 #endif
-}
-
-void
-	ColouredBuffer<wchar_t>::
-	StandardInstall()
-{
-#ifdef WIN32
-	// Redirect `stdout` via us.
-	new ColouredBuffer<wchar_t>(::std::wcout, true);
-	new ColouredBuffer<wchar_t>(::std::wcerr, true);
-#endif
-}
-
-char const *
-	ColouredBuffer<char>::
-	wstrchr(char const * s, char const n)
-{
-	return strchr(s, n);
-}
-
-wchar_t const *
-	ColouredBuffer<wchar_t>::
-	wstrchr(wchar_t const * s, wchar_t const n)
-{
-	return wcschr(s, n);
-}
-
-::std::streamsize
-	ColouredBuffer<char>::
-	wstrout(char const * s)
-{
-	return buffer_.sputn(s, strlen(s));
-}
-
-::std::streamsize
-	ColouredBuffer<wchar_t>::
-	wstrout(char const * s)
-{
-	wchar_t w[12];
-	size_t conv;
-	mbstowcs_s(&conv, w, 12, s, 12);
-	return buffer_.sputn(w, wcslen(w));
-}
 

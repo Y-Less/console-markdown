@@ -1116,7 +1116,7 @@ parse_fencedcode(struct buf *ob, struct render *rndr,
 			escaping entities */
 		if (is_empty(data + beg, end - beg))
 			bufputc(work, '\n');
-		else bufput(work, data + beg, end - beg); }
+		else bufput(work, data + beg, end - beg);
 		beg = end; }
 
 	while (work->size && work->data[work->size - 1] == '\n')
