@@ -127,6 +127,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ColouredBuffer.cpp" />
+    <ClCompile Include="consolerenderer.c" />
     <ClCompile Include="libsoldout\array.c" />
     <ClCompile Include="libsoldout\buffer.c" />
     <ClCompile Include="libsoldout\markdown.c" />
@@ -137,6 +138,7 @@
     <ClInclude Include="libsoldout\array.h" />
     <ClInclude Include="libsoldout\buffer.h" />
     <ClInclude Include="libsoldout\markdown.h" />
+    <ClInclude Include="strings.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
