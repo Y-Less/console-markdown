@@ -3,28 +3,6 @@
 
 int main()
 {
-	//ColouredBuffer<char>::StandardInstall();
-	//ColouredBuffer<wchar_t>::StandardInstall();
-	//DumpColouredBufferExamples();
-
-	//std::cout << "**bold**, _italic_" << std::endl;
-	////std::cout << "\x1B[1mbold\x1B[0m, _italic_" << std::endl;
-	////std::cout << "\x1B[37mbold\x1B[0m, _italic_" << std::endl;
-	////std::cout << "\x1B[37;1mbold\x1B[0m, _italic_" << std::endl;
-	//std::cout << "\x1B[5;47;30mbold\x1B[0m, \x1B[37;1mitalic\x1B[0m" << std::endl;
-	//
-	//
-	//void WriteMD(char const * str)
-
-
-
-
-	//std::cout << "\x1B[42;5;30mHeading 1\x1B[0m, _italic_" << std::endl;
-	//std::cout << "\x1B[32;1mHeading 2\x1B[0m, _italic_" << std::endl;
-	//std::cout << "\x1B[33;1mHeading 3\x1B[0m, _italic_" << std::endl;
-	//std::cout << "\x1B[31;1mHeading 4\x1B[0m, _italic_" << std::endl;
-
-
 	cmdmd::Init();
 
 	std::cout << cmdmd::Render(R"(
@@ -51,6 +29,19 @@ hook OnPlayerConnect(playerid)
 	}
 }
 ```
+
+    
+      0x02000700, 0x00000000, 0x00FFFE00, 0x00000007, 0x00000000, 0x00000000,
+      0x02000700, 0x00000000, 0x00FFFE00, 0x00000007, 0x00000000, 0x00000000,
+          0x031D2775, 0x00000000, 0x00FFFE00, 0x00000007, 0x00000000, 0x00000000,
+          0x02000700, 0x00000000, 0x00FFFE00, 0x00000007, 0x00000000, 0x00000000,
+              0x02BE4788, 0x00000000, 0x00FFFE00, 0x00000007, 0x0003C000, 0x00000000,
+              0x02010771, 0x00000000, 0x00FFFE00, 0x00000007, 0x00000000, 0x00000000,
+                  0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+                  0x02000700, 0x00000000, 0x00FFFE00, 0x00000007, 0x00000000, 0x00000000,
+                      0x02000700, 0x00000000, 0x00FFFE00, 0x00000007, 0x00000000, 0x00000000,
+                      0x029A0FCE, 0x00000000, 0x00FFFE00, 0x00000007, 0x0000C000, 0x00000000,
+
 
 * One
 * Two

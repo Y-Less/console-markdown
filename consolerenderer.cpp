@@ -10,6 +10,7 @@ extern "C"
 #include "ColouredBuffer.hpp"
 #include "include/CMDMD/CMDMD.hpp"
 
+#include "StringUtils.hpp"
 #include "parsers/cpp.hpp"
 #include "parsers/pawn.hpp"
 
@@ -71,7 +72,28 @@ static int
 void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
 {
 	// Just indent it all 4 spaces.
-	BUFPUTSL(ob, "\n");
+	if (text && text->size)
+	{
+		::std::string
+			code(text->data, text->size);
+		
+		std::string::size_type
+			lastPos = 0,
+			findPos;
+
+		while (std::string::npos != (findPos = code.find("\n", lastPos)))
+		{
+			BUFPUTSL(ob, "\n\x1B[0m    \x1B[47;30m");
+			bufput(ob, code.c_str() + lastPos, findPos - lastPos);
+			if (findPos - lastPos < 75)
+			{
+				bufput(ob, "                                                                                ", 75 - findPos + lastPos);
+			}
+			lastPos = findPos + 1;
+		}
+		bufput(ob, code.c_str() + lastPos, code.length() - lastPos);
+		BUFPUTSL(ob, "\x1B[0m\n");
+	}
 }
 
 void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namelen, void *opaque)
@@ -84,6 +106,7 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 	{
 		if (!strncmp(name, "cpp", 3))
 		{
+
 			::std::string
 				out = Syntax::CPP(::std::string(text->data, text->size));
 			BUFPUTSL(ob, "\n");
@@ -113,7 +136,7 @@ static void
 	{
 		if (ob->size)
 		{
-			bufputc(ob, '\n');
+			BUFPUTSL(ob, "\n");
 		}
 		size_t
 			len = text->size;
