@@ -17,9 +17,9 @@ add_library(console-markdown STATIC
 	ConsoleRenderer.cpp
 	parsers/pawn.cpp
 	parsers/cpp.cpp
-	include/CMDMD/CPP.hpp
-	include/CMDMD/Pawn.hpp
-	include/CMDMD/CMDMD.hpp
+	include/console-markdown/CPP.hpp
+	include/console-markdown/Pawn.hpp
+	include/console-markdown/CMDMD.hpp
 	libsoldout/array.c
 	libsoldout/array.h
 	libsoldout/buffer.c

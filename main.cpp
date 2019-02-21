@@ -1,4 +1,4 @@
-#include <CMDMD/CMDMD.hpp>
+#include <console-markdown/CMDMD.hpp>
 #include <iostream>
 
 using namespace cmdmd::Literals;

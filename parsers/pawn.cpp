@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string.h>
 #include <regex>
-#include "../include/CMDMD/Pawn.hpp"
+#include "../include/console-markdown/Pawn.hpp"
 #include "../StringUtils.hpp"
 
 // This parser is NOT comprehensive.  If you do silly things like escaped quotes with comments in

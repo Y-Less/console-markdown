@@ -8,11 +8,11 @@ extern "C"
 #include <string>
 
 #include "ColouredBuffer.hpp"
-#include "include/CMDMD/CMDMD.hpp"
+#include "include/console-markdown/CMDMD.hpp"
 
 #include "StringUtils.hpp"
-#include "include/CMDMD/CPP.hpp"
-#include "include/CMDMD/Pawn.hpp"
+#include "include/console-markdown/CPP.hpp"
+#include "include/console-markdown/Pawn.hpp"
 
 #ifndef CONMD_WINDOWS
 	#include <sys/ioctl.h>
