@@ -1,4 +1,11 @@
 /Debug
-/console-markdown.vcxproj.filters
-/console-markdown.vcxproj.user
+/*.vcxproj.filters
+/*.vcxproj.user
 /.vs
+/CMakeCache.txt
+/CMakeFiles
+/Release
+/Win32
+/console-markdown.dir
+/console-markdown-test.dir
+/cmake_install.cmake
