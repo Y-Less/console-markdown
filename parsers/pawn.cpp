@@ -85,3 +85,11 @@ static void
 	return ret + "\x1B[0m";
 }
 
+::std::string
+	cmdmd::
+	Literals::
+	operator "" _pawn_syntax(char const * s, size_t len)
+{
+	return Pawn(::std::string(s, len));
+}
+

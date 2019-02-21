@@ -10,10 +10,7 @@ namespace cmdmd
 	inline namespace Literals
 	{
 		::std::string
-			operator "" _pawn_syntax(char const * s, size_t len)
-		{
-			return Pawn(::std::string(s, len));
-		}
+			operator "" _pawn_syntax(char const * s, size_t len);
 	}
 };
 

@@ -141,7 +141,7 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 				BUFPUTSL(ob, "\n");
 			}
 			::std::string
-				out = Syntax::CPP(::std::string(text->data, text->size));
+				out = cmdmd::CPP(::std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
 			BUFPUTSL(ob, "\n");
 			return;
@@ -153,7 +153,7 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 				BUFPUTSL(ob, "\n");
 			}
 			::std::string
-				out = Syntax::Pawn(::std::string(text->data, text->size));
+				out = cmdmd::Pawn(::std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
 			BUFPUTSL(ob, "\n");
 			return;
@@ -456,5 +456,13 @@ void cmdmd::Init()
 {
 	ColouredBuffer<char>::StandardInstall();
 	ColouredBuffer<wchar_t>::StandardInstall();
+}
+
+::std::string
+	cmdmd::
+	Literals::
+	operator "" _cmdmd(char const * s, size_t len)
+{
+	return ::cmdmd::Render(s, len);
 }
 

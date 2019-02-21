@@ -83,3 +83,11 @@ static void
 	return ret + "\x1B[0m";
 }
 
+::std::string
+	cmdmd::
+	Literals::
+	operator "" _cpp_syntax(char const * s, size_t len)
+{
+	return CPP(::std::string(s, len));
+}
+
