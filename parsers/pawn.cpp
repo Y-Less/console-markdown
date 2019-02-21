@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string.h>
 #include <regex>
-#include "pawn.hpp"
+#include "../include/CMDMD/Pawn.hpp"
 #include "../StringUtils.hpp"
 
 // This parser is NOT comprehensive.  If you do silly things like escaped quotes with comments in
@@ -69,7 +69,7 @@ static void
 }
 
 ::std::string
-	Syntax::
+	cmdmd::
 	Pawn(::std::string const & s, bool ysi)
 {
 	gYSI = ysi ? 8 : 7;
@@ -83,13 +83,5 @@ static void
 	ReplaceAll(ret, "\n", "\n    ");
 	// Reset the colour.
 	return ret + "\x1B[0m";
-}
-
-::std::string
-	Syntax::
-	Literals::
-	operator "" _pawn_syntax(char const * s, size_t len)
-{
-	return Pawn(::std::string(s, len));
 }
 

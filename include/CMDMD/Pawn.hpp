@@ -1,9 +1,8 @@
 #pragma once
 
 #include <string>
-#include <string.h>
 
-namespace Syntax
+namespace cmdmd
 {
 	::std::string
 		Pawn(::std::string const & s, bool ysi = true);
@@ -11,7 +10,12 @@ namespace Syntax
 	inline namespace Literals
 	{
 		::std::string
-			operator "" _pawn_syntax(char const * s, size_t len);
+			operator "" _pawn_syntax(char const * s, size_t len)
+		{
+			return Pawn(::std::string(s, len));
+		}
 	}
 };
+
+using namespace cmdmd::Literals;
 

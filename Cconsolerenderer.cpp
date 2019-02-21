@@ -11,8 +11,8 @@ extern "C"
 #include "include/CMDMD/CMDMD.hpp"
 
 #include "StringUtils.hpp"
-#include "parsers/cpp.hpp"
-#include "parsers/pawn.hpp"
+#include "include/CMDMD/CPP.hpp"
+#include "include/CMDMD/Pawn.hpp"
 
 #ifndef CONMD_WINDOWS
 	#include <sys/ioctl.h>
@@ -456,13 +456,5 @@ void cmdmd::Init()
 {
 	ColouredBuffer<char>::StandardInstall();
 	ColouredBuffer<wchar_t>::StandardInstall();
-}
-
-::std::string
-	cmdmd::
-	Literals::
-	operator "" _cmdmd(char const * s, size_t len)
-{
-	return ::cmdmd::Render(s, len);
 }
 

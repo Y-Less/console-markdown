@@ -14,12 +14,12 @@ add_library(console-markdown STATIC
 	ColouredBuffer.hpp
 	StringUtils.cpp
 	StringUtils.hpp
-	consolerenderer.cpp
-	include/CMDMD/CMDMD.hpp
+	ConsoleRenderer.cpp
 	parsers/pawn.cpp
-	parsers/pawn.hpp
 	parsers/cpp.cpp
-	parsers/cpp.hpp
+	include/CMDMD/CPP.hpp
+	include/CMDMD/Pawn.hpp
+	include/CMDMD/CMDMD.hpp
 	libsoldout/array.c
 	libsoldout/array.h
 	libsoldout/buffer.c

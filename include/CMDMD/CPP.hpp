@@ -1,9 +1,8 @@
 #pragma once
 
 #include <string>
-#include <string.h>
 
-namespace Syntax
+namespace cmdmd
 {
 	::std::string
 		CPP(::std::string const & s);
@@ -12,6 +11,11 @@ namespace Syntax
 	{
 		::std::string
 			operator "" _cpp_syntax(char const * s, size_t len);
+		{
+			return CPP(::std::string(s, len));
+		}
 	}
 };
+
+using namespace cmdmd::Literals;
 

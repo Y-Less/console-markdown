@@ -13,6 +13,9 @@ namespace cmdmd
 	{
 		::std::string
 			operator "" _cmdmd(char const * s, size_t len);
+		{
+			return Render(s, len);
+		}
 	}
 };
 

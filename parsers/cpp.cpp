@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string.h>
 #include <regex>
-#include "cpp.hpp"
+#include "../include/CMDMD/CPP.hpp"
 #include "../StringUtils.hpp"
 
 // This parser is NOT comprehensive.  If you do silly things like escaped quotes with comments in
@@ -68,7 +68,7 @@ static void
 }
 
 ::std::string
-	Syntax::
+	cmdmd::
 	CPP(::std::string const & s)
 {
 	::std::stringstream
@@ -81,13 +81,5 @@ static void
 	ReplaceAll(ret, "\n", "\n    ");
 	// Reset the colour.
 	return ret + "\x1B[0m";
-}
-
-::std::string
-	Syntax::
-	Literals::
-	operator "" _cpp_syntax(char const * s, size_t len)
-{
-	return CPP(::std::string(s, len));
 }
 
