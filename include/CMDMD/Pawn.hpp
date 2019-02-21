@@ -14,5 +14,3 @@ namespace cmdmd
 	}
 };
 
-using namespace cmdmd::Literals;
-

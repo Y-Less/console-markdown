@@ -1,6 +1,8 @@
 #include <CMDMD/CMDMD.hpp>
 #include <iostream>
 
+using namespace cmdmd::Literals;
+
 int main()
 {
 	cmdmd::Init();
