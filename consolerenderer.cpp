@@ -452,3 +452,12 @@ void cmdmd::Init()
 	ColouredBuffer<wchar_t>::StandardInstall();
 }
 
+
+::std::string
+	cmdmd::
+	Literals::
+	operator "" _cmdmd(char const * s, size_t len)
+{
+	return ::cmdmd::Render(s, len);
+}
+

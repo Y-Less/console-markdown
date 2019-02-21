@@ -5,7 +5,7 @@ int main()
 {
 	cmdmd::Init();
 
-	std::cout << cmdmd::Render(R"(
+	std::cout << R"(
 ____
   
 # Heading 1
@@ -27,6 +27,14 @@ hook OnPlayerConnect(playerid)
 	{
 		printf("Markdown!");
 	}
+}
+```
+
+```cpp
+class MyClass : public BaseClass
+{
+private:
+	virtual unsigned int Method(float a, Data const & b) override = 0;
 }
 ```
 
@@ -66,7 +74,7 @@ I hope you are OK, like `someCode()` is.
 2. One
 3. One1
   
-)");
+)"_cmdmd;
 
 	return 0;
 }
