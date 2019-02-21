@@ -81,13 +81,40 @@ void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
 			lastPos = 0,
 			findPos;
 
+		CONSOLE_SCREEN_BUFFER_INFO
+			console;
+		bool
+			hasNL = false;
+		int
+			ret,
+			width = 80;
+		ret = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &console);
+		if (ret)
+		{
+			width = console.dwSize.X;
+			BUFPUTSL(ob, "\n");
+		}
 		while (std::string::npos != (findPos = code.find("\n", lastPos)))
 		{
-			BUFPUTSL(ob, "\n\x1B[0m    \x1B[47;30m");
+			if (hasNL || (ret && width == 80))
+			{
+				BUFPUTSL(ob, "\x1B[0m    \x1B[47;30m");
+			}
+			else
+			{
+				// If we don't know the console size, we must resort to guessing.
+				BUFPUTSL(ob, "\n\x1B[0m    \x1B[47;30m");
+			}
+			hasNL = false;
 			bufput(ob, code.c_str() + lastPos, findPos - lastPos);
 			if (findPos - lastPos < 75)
 			{
-				bufput(ob, "                                                                                ", 75 - findPos + lastPos);
+				bufput(ob, "                                                                                ", 76 - findPos + lastPos);
+			}
+			else
+			{
+				BUFPUTSL(ob, "\n");
+				hasNL = true;
 			}
 			lastPos = findPos + 1;
 		}
@@ -111,6 +138,7 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 				out = Syntax::CPP(::std::string(text->data, text->size));
 			BUFPUTSL(ob, "\n");
 			bufput(ob, out.c_str(), out.length());
+			return;
 		}
 		else if (!strncmp(name, "pawn", 3))
 		{
@@ -118,12 +146,10 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 				out = Syntax::Pawn(::std::string(text->data, text->size));
 			BUFPUTSL(ob, "\n");
 			bufput(ob, out.c_str(), out.length());
-		}
-		else
-		{
-			rndr_blockcode(ob, text, opaque);
+			return;
 		}
 	}
+	rndr_blockcode(ob, text, opaque);
 }
 
 static void
