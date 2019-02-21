@@ -39,3 +39,5 @@ endif()
 add_executable(console-markdown-test main.cpp)
 target_link_libraries(console-markdown-test console-markdown)
 
+target_include_directories(console-markdown-test PRIVATE include)
+

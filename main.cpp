@@ -1,4 +1,4 @@
-#include "include/CMDMD/CMDMD.hpp"
+#include <CMDMD/CMDMD.hpp>
 #include <iostream>
 
 int main()
