@@ -18,9 +18,6 @@ public:
 	static void StandardInstall();
 
 private:
-	bool const
-		coloured_;
-
 	typedef
 		::std::basic_stringbuf<C, T, A>
 		stringbuf_type;
@@ -58,11 +55,14 @@ private:
 
 	ColouredBuffer() = delete;
 
+#ifdef CONMD_WINDOWS
 	char_type const * wstrchr(char_type const * s, char_type const n);
 
 	::std::streamsize wstrout(char const * s);
 
-#ifdef CONMD_WINDOWS
+	bool const
+		coloured_;
+
 	ostream_type *
 		src_;
 

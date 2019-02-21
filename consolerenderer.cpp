@@ -14,6 +14,12 @@ extern "C"
 #include "parsers/cpp.hpp"
 #include "parsers/pawn.hpp"
 
+#ifndef CONMD_WINDOWS
+	#include <sys/ioctl.h>
+	#include <unistd.h>
+	#define sprintf_s sprintf
+#endif
+
 static int RenderMarkdown(struct buf * ob, char const * style, struct buf const * text)
 {
 	if (text && text->size)
@@ -169,9 +175,9 @@ static void
 		case 1:
 			BUFPUTSL(ob, "\x1B[42;5;30m ");
 			bufput(ob, text->data, text->size);
-			BUFPUTSL(ob, " \n");
+			BUFPUTSL(ob, " \x1B[0;49m\n\x1B[42;5;30m");
 			bufputcn(ob, '=', len + 2);
-			BUFPUTSL(ob, "\x1B[0m\n");
+			BUFPUTSL(ob, "\x1B[0m\n\x1B[0m");
 			break;
 		case 2:
 			BUFPUTSL(ob, "\x1B[32;1m ");
@@ -346,7 +352,7 @@ void rndr_hrule(struct buf *ob, void *opaque)
 	}
 	size_t
 		len = reinterpret_cast<console_data_s *>(opaque)->Width;
-	BUFPUTSL(ob, "\x1B[47;37m");
+	BUFPUTSL(ob, "\x1B[44;34m");
 	bufputcn(ob, ' ', len);
 	BUFPUTSL(ob, "\x1B[0m\n");
 }
@@ -421,8 +427,11 @@ void rndr_hrule(struct buf *ob, void *opaque)
 	console_data_s
 		data = { width, 0 };
 #else
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
 	console_data_s
-		data = { 80, 0 };
+		data = { w.ws_col, 0 };
 #endif
 	consoleRenderer.opaque = reinterpret_cast<void *>(&data);
 	markdown(ob, &ib, &consoleRenderer);

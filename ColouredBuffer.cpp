@@ -18,6 +18,7 @@
 		default_;
 #endif
 
+template <>
 void
 	ColouredBuffer<char>::
 	StandardInstall()
@@ -29,6 +30,7 @@ void
 #endif
 }
 
+template <>
 void
 	ColouredBuffer<wchar_t>::
 	StandardInstall()
@@ -40,6 +42,8 @@ void
 #endif
 }
 
+#ifdef CONMD_WINDOWS
+template <>
 char const *
 	ColouredBuffer<char>::
 	wstrchr(char const * s, char const n)
@@ -47,6 +51,7 @@ char const *
 	return strchr(s, n);
 }
 
+template <>
 wchar_t const *
 	ColouredBuffer<wchar_t>::
 	wstrchr(wchar_t const * s, wchar_t const n)
@@ -54,6 +59,7 @@ wchar_t const *
 	return wcschr(s, n);
 }
 
+template <>
 ::std::streamsize
 	ColouredBuffer<char>::
 	wstrout(char const * s)
@@ -61,6 +67,7 @@ wchar_t const *
 	return buffer_.sputn(s, strlen(s));
 }
 
+template <>
 ::std::streamsize
 	ColouredBuffer<wchar_t>::
 	wstrout(char const * s)
@@ -70,6 +77,7 @@ wchar_t const *
 	mbstowcs_s(&conv, w, 12, s, 12);
 	return buffer_.sputn(w, wcslen(w));
 }
+#endif
 
 #if defined _DEBUG
 	void DumpColouredBufferExamples()
