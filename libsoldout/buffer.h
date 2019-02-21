@@ -129,6 +129,10 @@ bufputs(struct buf *, const char*);
 void
 bufputc(struct buf *, char);
 
+/* bufputcn • appends a character repeatedly to a buffer */
+void
+bufputcn(struct buf *, char, size_t);
+
 /* bufrelease • decrease the reference count and free the buffer if needed */
 void
 bufrelease(struct buf *);

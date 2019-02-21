@@ -1220,7 +1220,7 @@ parse_listitem(struct buf *ob, struct render *rndr,
 
 	/* render of li itself */
 	if (rndr->make.listitem)
-		rndr->make.listitem(ob, inter, flags, rndr->make.opaque);
+		rndr->make.listitem(ob, inter, *flags, rndr->make.opaque);
 	release_work_buffer(rndr, inter);
 	release_work_buffer(rndr, work);
 	return beg; }
@@ -1239,7 +1239,7 @@ parse_list(struct buf *ob, struct render *rndr,
 		if (!j || (flags & MKD_LI_END)) break; }
 
 	if (rndr->make.list)
-		rndr->make.list(ob, work, &flags, rndr->make.opaque);
+		rndr->make.list(ob, work, flags, rndr->make.opaque);
 	release_work_buffer(rndr, work);
 	return i; }
 

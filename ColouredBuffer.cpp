@@ -22,7 +22,7 @@ void
 	ColouredBuffer<char>::
 	StandardInstall()
 {
-#ifdef WIN32
+#ifdef CONMD_WINDOWS
 	// Redirect `stdout` via us.
 	new ColouredBuffer<char>(::std::cout, true);
 	new ColouredBuffer<char>(::std::cerr, true);
@@ -33,7 +33,7 @@ void
 	ColouredBuffer<wchar_t>::
 	StandardInstall()
 {
-#ifdef WIN32
+#ifdef CONMD_WINDOWS
 	// Redirect `stdout` via us.
 	new ColouredBuffer<wchar_t>(::std::wcout, true);
 	new ColouredBuffer<wchar_t>(::std::wcerr, true);

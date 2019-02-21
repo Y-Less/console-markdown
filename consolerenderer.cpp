@@ -28,6 +28,12 @@ static int RenderMarkdown(struct buf * ob, char const * style, struct buf const 
 	return 0;
 }
 
+struct console_data_s
+{
+	size_t Width;
+	int BulletPoint;
+};
+
 /*static void
 	rndr_blockquote(struct buf *ob, struct buf *text, void *opaque)
 {
@@ -76,45 +82,28 @@ void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
 	{
 		::std::string
 			code(text->data, text->size);
-		
+
 		std::string::size_type
 			lastPos = 0,
 			findPos;
 
-		CONSOLE_SCREEN_BUFFER_INFO
-			console;
-		bool
-			hasNL = false;
-		int
-			ret,
-			width = 80;
-		ret = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &console);
-		if (ret)
+		size_t
+			width = reinterpret_cast<console_data_s *>(opaque)->Width;
+		if (ob->size)
 		{
-			width = console.dwSize.X;
 			BUFPUTSL(ob, "\n");
 		}
 		while (std::string::npos != (findPos = code.find("\n", lastPos)))
 		{
-			if (hasNL || (ret && width == 80))
-			{
-				BUFPUTSL(ob, "\x1B[0m    \x1B[47;30m");
-			}
-			else
-			{
-				// If we don't know the console size, we must resort to guessing.
-				BUFPUTSL(ob, "\n\x1B[0m    \x1B[47;30m");
-			}
-			hasNL = false;
+			BUFPUTSL(ob, "\x1B[0m    \x1B[47;30m");
 			bufput(ob, code.c_str() + lastPos, findPos - lastPos);
-			if (findPos - lastPos < 75)
+			if (findPos - lastPos < width - 4)
 			{
-				bufput(ob, "                                                                                ", 76 - findPos + lastPos);
+				bufputcn(ob, ' ', width - 4 - findPos + lastPos);
 			}
 			else
 			{
 				BUFPUTSL(ob, "\n");
-				hasNL = true;
 			}
 			lastPos = findPos + 1;
 		}
@@ -155,9 +144,6 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 static void
 	rndr_header(struct buf *ob, struct buf *text, int level, void *opaque)
 {
-	static char const
-		firstLevel[] = "================================================================================",
-		secondLevel[] = "------------------------------------------------------------------------------";
 	if (text && text->size)
 	{
 		if (ob->size)
@@ -165,10 +151,11 @@ static void
 			BUFPUTSL(ob, "\n");
 		}
 		size_t
+			width = reinterpret_cast<console_data_s *>(opaque)->Width,
 			len = text->size;
-		if (len > 78)
+		if (len > width - 2)
 		{
-			len = 78;
+			len = width - 2;
 		}
 		switch (level)
 		{
@@ -176,14 +163,14 @@ static void
 			BUFPUTSL(ob, "\x1B[42;5;30m ");
 			bufput(ob, text->data, text->size);
 			BUFPUTSL(ob, " \n");
-			bufput(ob, firstLevel, len + 2);
+			bufputcn(ob, '=', len + 2);
 			BUFPUTSL(ob, "\x1B[0m\n");
 			break;
 		case 2:
 			BUFPUTSL(ob, "\x1B[32;1m ");
 			bufput(ob, text->data, text->size);
 			BUFPUTSL(ob, "\n ");
-			bufput(ob, secondLevel, len);
+			bufputcn(ob, '-', len);
 			BUFPUTSL(ob, "\x1B[0m\n");
 			break;
 		case 3:
@@ -223,7 +210,7 @@ static void
 }*/
 
 static void
-	rndr_list(struct buf *ob, struct buf *text, int *flags, void *opaque)
+	rndr_list(struct buf *ob, struct buf *text, int flags, void *opaque)
 {
 	if (text)
 	{
@@ -232,13 +219,13 @@ static void
 			BUFPUTSL(ob, "\n");
 		}
 		bufput(ob, text->data, text->size);
+		reinterpret_cast<console_data_s *>(opaque)->BulletPoint = 0;
 	}
 }
 
 static void
-	rndr_listitem(struct buf *ob, struct buf *text, int *flags, void *opaque)
+	rndr_listitem(struct buf *ob, struct buf *text, int flags, void *opaque)
 {
-	int pos = 0;
 	char num[4];
 	if (text)
 	{
@@ -248,13 +235,10 @@ static void
 		}
 		if (text->size)
 		{
-			if (*flags & MKD_LIST_ORDERED)
+			if (flags & MKD_LIST_ORDERED)
 			{
-				pos = *flags >> 8;
-				pos += 1;
-				*flags = (*flags & 0xFF) | (pos << 8);
 				BUFPUTSL(ob, " \x1B[35m");
-				sprintf_s(num, "%d", pos);
+				sprintf_s(num, "%d", ++reinterpret_cast<console_data_s *>(opaque)->BulletPoint);
 				bufput(ob, num, strlen(num));
 				BUFPUTSL(ob, ")\x1B[0m ");
 				bufput(ob, text->data, text->size);
@@ -267,14 +251,7 @@ static void
 				BUFPUTSL(ob, "\n");
 			}
 		}
-	//if (text)
-	//{
-	//	while (text->size && text->data[text->size - 1] == '\n')
-	//	{
-	//		text->size -= 1;
-	//	bufput(ob, text->data, text->size);
 	}
-	//BUFPUTSL(ob, "</li>\n");
 }
 
 static void
@@ -360,7 +337,11 @@ void rndr_hrule(struct buf *ob, void *opaque)
 	{
 		BUFPUTSL(ob, "\n");
 	}
-	BUFPUTSL(ob, "\x1B[47;37m                                                                                \x1B[0m\n");
+	size_t
+		len = reinterpret_cast<console_data_s *>(opaque)->Width;
+	BUFPUTSL(ob, "\x1B[47;37m");
+	bufputcn(ob, ' ', len);
+	BUFPUTSL(ob, "\x1B[0m\n");
 }
 
 /* exported renderer structures */
@@ -376,7 +357,7 @@ void rndr_hrule(struct buf *ob, void *opaque)
 
 ::std::string cmdmd::Render(char const * input, size_t len)
 {
-	static const struct mkd_renderer
+	static struct mkd_renderer
 		consoleRenderer =
 		{
 			NULL,
@@ -412,8 +393,6 @@ void rndr_hrule(struct buf *ob, void *opaque)
 			"*_",
 			NULL
 		};
-	//::std::ostream *
-	//	out = &::std::cout;
 	buf
 		* ob = bufnew(64),
 		ib = {
@@ -423,24 +402,27 @@ void rndr_hrule(struct buf *ob, void *opaque)
 			0,
 			0xFFFF
 		};
-	//markdown(ob, ib, &to_man);
-
-	/* writing the result to stdout */
-	//ret = fwrite(ob->data, 1, ob->size, stdout);
-	//if (ret < ob->size)
-	//	fprintf(stderr, "Warning: only %zu output byte written, "
-	//		"out of %zu\n",
-	//		ret,
-	//		ob->size);
-	//consoleRenderer.opaque = reinterpret_cast<void *>(out);
+#ifdef CONMD_WINDOWS
+	CONSOLE_SCREEN_BUFFER_INFO
+		console;
+	size_t
+		width = 80;
+	if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &console))
+	{
+		width = console.dwSize.X;
+	}
+	console_data_s
+		data = { width, 0 };
+#else
+	console_data_s
+		data = { 80, 0 };
+#endif
+	consoleRenderer.opaque = reinterpret_cast<void *>(&data);
 	markdown(ob, &ib, &consoleRenderer);
 
-	//::std::cout.write(ob->data, ob->size);
 	::std::string
 		ret(ob->data, ob->size);
 
-	/* cleanup */
-	//bufrelease(ib);
 	bufrelease(ob);
 
 	return ret;
@@ -451,7 +433,6 @@ void cmdmd::Init()
 	ColouredBuffer<char>::StandardInstall();
 	ColouredBuffer<wchar_t>::StandardInstall();
 }
-
 
 ::std::string
 	cmdmd::

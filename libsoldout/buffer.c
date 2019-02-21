@@ -209,6 +209,16 @@ bufputc(struct buf *buf, char c) {
 	buf->size += 1; }
 
 
+/* bufputcn • appends a character repeatedly to a buffer */
+void
+bufputcn(struct buf *buf, char c, size_t n) {
+	if (!buf) return;
+	if (buf->size + n > buf->asize && !bufgrow(buf, buf->size + n))
+		return;
+	memset(buf->data + buf->size, c, n);
+	buf->size += n; }
+
+
 /* bufrelease • decrease the reference count and free the buffer if needed */
 void
 bufrelease(struct buf *buf) {
