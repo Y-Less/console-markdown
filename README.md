@@ -7,3 +7,7 @@ Alternate code formatting/highlighting, and the `_cmdmd` string literal operator
 
 ![String literal](4.png)
 
+Windows vs. Linux:
+
+![Windows vs. Linux](5.png)
+
