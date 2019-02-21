@@ -122,19 +122,26 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 	{
 		if (!strncmp(name, "cpp", 3))
 		{
-
+			if (ob->size)
+			{
+				BUFPUTSL(ob, "\n");
+			}
 			::std::string
 				out = Syntax::CPP(::std::string(text->data, text->size));
-			BUFPUTSL(ob, "\n");
 			bufput(ob, out.c_str(), out.length());
+			BUFPUTSL(ob, "\n");
 			return;
 		}
 		else if (!strncmp(name, "pawn", 3))
 		{
+			if (ob->size)
+			{
+				BUFPUTSL(ob, "\n");
+			}
 			::std::string
 				out = Syntax::Pawn(::std::string(text->data, text->size));
-			BUFPUTSL(ob, "\n");
 			bufput(ob, out.c_str(), out.length());
+			BUFPUTSL(ob, "\n");
 			return;
 		}
 	}
