@@ -1,6 +1,8 @@
 /Debug
 /*.vcxproj.filters
 /*.vcxproj.user
+/*.vcxproj
+/*.sln
 /.vs
 /CMakeCache.txt
 /CMakeFiles
@@ -9,3 +11,5 @@
 /console-markdown.dir
 /console-markdown-test.dir
 /cmake_install.cmake
+/Makefile
+
