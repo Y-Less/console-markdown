@@ -71,14 +71,22 @@ static int
 	rndr_double_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
 	// Double `*` or `_` is `__bold__`.
+#ifndef CONMD_WINDOWS
 	return RenderMarkdown(ob, "\x1B[5;47;30m", text);
+#else
+	return RenderMarkdown(ob, "\x1B[1m", text);
+#endif
 }
 
 static int
 	rndr_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
 	// Single `*` or `_` is `*italic*`.
+#ifdef CONMD_WINDOWS
 	return RenderMarkdown(ob, "\x1B[37;1m", text);
+#else
+	return RenderMarkdown(ob, "\x1B[4m", text);
+#endif
 }
 
 void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
