@@ -35,7 +35,8 @@ static int RenderMarkdown(struct buf * ob, char const * style, struct buf const 
 
 struct console_data_s
 {
-	size_t Width;
+	size_t WindowWidth;
+	size_t BufferWidth;
 	int BulletPoint;
 };
 
@@ -101,22 +102,27 @@ void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
 			findPos;
 
 		size_t
-			width = reinterpret_cast<console_data_s *>(opaque)->Width;
+			windowWidth = reinterpret_cast<console_data_s *>(opaque)->WindowWidth,
+			bufferWidth = reinterpret_cast<console_data_s *>(opaque)->BufferWidth;
 		if (ob->size)
 		{
-			BUFPUTSL(ob, "\n");
+			bufputc(ob, '\n');
 		}
 		while (std::string::npos != (findPos = code.find("\n", lastPos)))
 		{
 			BUFPUTSL(ob, "\x1B[0m    \x1B[47;30m");
 			bufput(ob, code.c_str() + lastPos, findPos - lastPos);
-			if (findPos - lastPos < width - 4)
+			if (findPos - lastPos < windowWidth - 4)
 			{
-				bufputcn(ob, ' ', width - 4 - findPos + lastPos);
+				bufputcn(ob, ' ', windowWidth - 4 - findPos + lastPos);
+				if (windowWidth < bufferWidth)
+				{
+					bufputc(ob, '\n');
+				}
 			}
 			else
 			{
-				BUFPUTSL(ob, "\n");
+				bufputc(ob, '\n');
 			}
 			lastPos = findPos + 1;
 		}
@@ -137,24 +143,24 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 		{
 			if (ob->size)
 			{
-				BUFPUTSL(ob, "\n");
+				bufputc(ob, '\n');
 			}
 			::std::string
 				out = cmdmd::CPP(::std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
-			BUFPUTSL(ob, "\n");
+			bufputc(ob, '\n');
 			return;
 		}
 		else if (!strncmp(name, "pawn", 3))
 		{
 			if (ob->size)
 			{
-				BUFPUTSL(ob, "\n");
+				bufputc(ob, '\n');
 			}
 			::std::string
 				out = cmdmd::Pawn(::std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
-			BUFPUTSL(ob, "\n");
+			bufputc(ob, '\n');
 			return;
 		}
 	}
@@ -168,10 +174,10 @@ static void
 	{
 		if (ob->size)
 		{
-			BUFPUTSL(ob, "\n");
+			bufputc(ob, '\n');
 		}
 		size_t
-			width = reinterpret_cast<console_data_s *>(opaque)->Width,
+			width = reinterpret_cast<console_data_s *>(opaque)->WindowWidth,
 			len = text->size;
 		if (len > width - 2)
 		{
@@ -236,7 +242,7 @@ static void
 	{
 		if (ob->size)
 		{
-			BUFPUTSL(ob, "\n");
+			bufputc(ob, '\n');
 		}
 		bufput(ob, text->data, text->size);
 		reinterpret_cast<console_data_s *>(opaque)->BulletPoint = 0;
@@ -262,13 +268,13 @@ static void
 				bufput(ob, num, strlen(num));
 				BUFPUTSL(ob, ")\x1B[0m ");
 				bufput(ob, text->data, text->size);
-				BUFPUTSL(ob, "\n");
+				bufputc(ob, '\n');
 			}
 			else
 			{
 				BUFPUTSL(ob, " \x1B[35m*\x1B[0m ");
 				bufput(ob, text->data, text->size);
-				BUFPUTSL(ob, "\n");
+				bufputc(ob, '\n');
 			}
 		}
 	}
@@ -304,7 +310,7 @@ static void
 	{
 		bufput(ob, text->data, text->size);
 	}
-	BUFPUTSL(ob, "\n");
+	bufputc(ob, '\n');
 }
 
 /*static void
@@ -347,7 +353,7 @@ static int
 static int
 	rndr_linebreak(struct buf *ob, void *opaque)
 {
-	BUFPUTSL(ob, "\n");
+	bufputc(ob, '\n');
 	return 1;
 }
 
@@ -355,10 +361,10 @@ void rndr_hrule(struct buf *ob, void *opaque)
 {
 	if (ob->size)
 	{
-		BUFPUTSL(ob, "\n");
+		bufputc(ob, '\n');
 	}
 	size_t
-		len = reinterpret_cast<console_data_s *>(opaque)->Width;
+		len = reinterpret_cast<console_data_s *>(opaque)->WindowWidth;
 	BUFPUTSL(ob, "\x1B[44;34m");
 	bufputcn(ob, ' ', len);
 	BUFPUTSL(ob, "\x1B[0m\n");
@@ -426,19 +432,22 @@ void rndr_hrule(struct buf *ob, void *opaque)
 	CONSOLE_SCREEN_BUFFER_INFO
 		console;
 	size_t
-		width = 80;
+		windowWidth = 80,
+		bufferWidth = 80;
 	if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &console))
 	{
-		width = console.dwSize.X;
+		// Use the console window size, not the line buffer size.
+		windowWidth = console.srWindow.Right - console.srWindow.Left + 1;
+		bufferWidth = console.dwSize.X;
 	}
 	console_data_s
-		data = { width, 0 };
+		data = { windowWidth, bufferWidth, 0 };
 #else
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
 	console_data_s
-		data = { w.ws_col, 0 };
+		data = { w.ws_col, w.ws_col, 0 };
 #endif
 	consoleRenderer.opaque = reinterpret_cast<void *>(&data);
 	markdown(ob, &ib, &consoleRenderer);

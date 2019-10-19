@@ -22,6 +22,9 @@ ____
 How are you?
 And is this a new paragraph?
 
+You should need two new lines to make a new paragraph,
+so this should all be wrapped on one line.  Of course that does depend on the width of the console (and not the line length) so check that as well.  We may need more code for wrapping text.
+
 ```pawn
 hook OnPlayerConnect(playerid)
 {
