@@ -10,7 +10,6 @@ extern "C"
 #include "ColouredBuffer.hpp"
 #include "include/console-markdown/CMDMD.hpp"
 
-#include "StringUtils.hpp"
 #include "include/console-markdown/CPP.hpp"
 #include "include/console-markdown/Pawn.hpp"
 
@@ -462,6 +461,14 @@ void cmdmd::Init()
 	cmdmd::
 	Literals::
 	operator "" _cmdmd(char const * s, size_t len)
+{
+	return ::cmdmd::Render(s, len);
+}
+
+::std::string
+	cmdmd::
+	Literals::
+	operator "" _md(char const * s, size_t len)
 {
 	return ::cmdmd::Render(s, len);
 }

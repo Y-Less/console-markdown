@@ -5,6 +5,7 @@
 namespace cmdmd
 {
 	void Init();
+
 	::std::string
 		Render(std::string const & input);
 
@@ -18,6 +19,9 @@ namespace cmdmd
 	{
 		::std::string
 			operator "" _cmdmd(char const * s, size_t len);
+
+		::std::string
+			operator "" _md(char const * s, size_t len);
 	}
 };
 
