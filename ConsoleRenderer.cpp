@@ -102,8 +102,9 @@ void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
 			findPos;
 
 		size_t
-			windowWidth = reinterpret_cast<console_data_s *>(opaque)->WindowWidth,
-			bufferWidth = reinterpret_cast<console_data_s *>(opaque)->BufferWidth;
+			windowWidth = reinterpret_cast<console_data_s *>(opaque)->WindowWidth;
+		bool
+			nl = windowWidth < reinterpret_cast<console_data_s *>(opaque)->BufferWidth;
 		if (ob->size)
 		{
 			bufputc(ob, '\n');
@@ -115,7 +116,7 @@ void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
 			if (findPos - lastPos < windowWidth - 4)
 			{
 				bufputcn(ob, ' ', windowWidth - 4 - findPos + lastPos);
-				if (windowWidth < bufferWidth)
+				if (nl)
 				{
 					bufputc(ob, '\n');
 				}
@@ -308,7 +309,56 @@ static void
 	}
 	if (text)
 	{
-		bufput(ob, text->data, text->size);
+		size_t
+			width = reinterpret_cast<console_data_s *>(opaque)->WindowWidth,
+			rem = width,
+			len = text->size;
+		bool
+			nl = reinterpret_cast<console_data_s *>(opaque)->BufferWidth > width;
+		char
+			* start = text->data,
+			* end;
+		while ((end = (char *)memchr(start, '\n', len)))
+		{
+			size_t
+				diff = end - start;
+			len -= diff + 1;
+			while (diff >= rem)
+			{
+				bufput(ob, start, rem);
+				diff -= rem;
+				start += rem;
+				rem = width;
+				if (nl)
+				{
+					bufputc(ob, '\n');
+				}
+			}
+			if (diff)
+			{
+				bufput(ob, start, diff);
+				rem = width - diff;
+			}
+			start = end + 1;
+		}
+		if (len)
+		{
+			while (len >= rem)
+			{
+				bufput(ob, start, rem);
+				len -= rem;
+				start += rem;
+				rem = width;
+				if (nl)
+				{
+					bufputc(ob, '\n');
+				}
+			}
+			if (len)
+			{
+				bufput(ob, start, len);
+			}
+		}
 	}
 	bufputc(ob, '\n');
 }
