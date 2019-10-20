@@ -11,6 +11,8 @@
 	#include <iostream>
 #endif
 
+namespace cmdmd
+{
 template <class C, class T = ::std::char_traits<C>, class A = ::std::allocator<C>>
 class ColouredBuffer : public ::std::basic_stringbuf<C, T, A>
 {
@@ -663,6 +665,7 @@ xsputn_loop_done:
 
 template class ColouredBuffer<char>;
 template class ColouredBuffer<wchar_t>;
+};
 
 #ifdef CONMD_WINDOWS
 	//#pragma warning(pop)

@@ -1,5 +1,7 @@
 #include "ColouredBuffer.hpp"
 
+using namespace cmdmd;
+
 #ifdef CONMD_WINDOWS
 	bool
 		ColouredBuffer<char>::
