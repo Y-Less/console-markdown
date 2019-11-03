@@ -4,12 +4,12 @@
 
 namespace cmdmd
 {
-	::std::string
-		Pawn(::std::string const & s, bool ysi = true);
+	std::string
+		Pawn(std::string const & s, bool ysi = true);
 
 	inline namespace Literals
 	{
-		::std::string
+		std::string
 			operator "" _pawn_syntax(char const * s, size_t len);
 	}
 };

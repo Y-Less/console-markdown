@@ -6,21 +6,21 @@ namespace cmdmd
 {
 	void Init();
 
-	::std::string
+	std::string
 		Render(std::string const & input);
 
-	::std::string
+	std::string
 		Render(char const * input);
 
-	::std::string
+	std::string
 		Render(char const * input, size_t len);
 
 	inline namespace Literals
 	{
-		::std::string
+		std::string
 			operator "" _cmdmd(char const * s, size_t len);
 
-		::std::string
+		std::string
 			operator "" _md(char const * s, size_t len);
 	}
 };

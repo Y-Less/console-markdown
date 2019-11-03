@@ -13,23 +13,23 @@
 
 namespace cmdmd
 {
-template <class C, class T = ::std::char_traits<C>, class A = ::std::allocator<C>>
-class ColouredBuffer : public ::std::basic_stringbuf<C, T, A>
+template <class C, class T = std::char_traits<C>, class A = std::allocator<C>>
+class ColouredBuffer : public std::basic_stringbuf<C, T, A>
 {
 public:
 	static void StandardInstall();
 
 private:
 	typedef
-		::std::basic_stringbuf<C, T, A>
+		std::basic_stringbuf<C, T, A>
 		stringbuf_type;
 
 	typedef
-		::std::basic_ostream<C, T>
+		std::basic_ostream<C, T>
 		ostream_type;
 
 	typedef
-		::std::basic_streambuf<C, T>
+		std::basic_streambuf<C, T>
 		streambuf_type;
 
 	typedef
@@ -60,7 +60,7 @@ private:
 #ifdef CONMD_WINDOWS
 	char_type const * wstrchr(char_type const * s, char_type const n);
 
-	::std::streamsize wstrout(char const * s);
+	std::streamsize wstrout(char const * s);
 
 	bool const
 		coloured_;
@@ -555,7 +555,7 @@ public:
 	}
 
 protected:
-	::std::streamsize xsputn(char_type const * s, ::std::streamsize n) override
+	std::streamsize xsputn(char_type const * s, std::streamsize n) override
 	{
 #ifdef CONMD_WINDOWS
 		char_type const
@@ -565,7 +565,7 @@ protected:
 		// Just in case.
 		if (n == 0 || s == nullptr)
 			return 0;
-		::std::streamsize
+		std::streamsize
 			ret = 0;
 		for (; ; )
 		{
@@ -617,7 +617,7 @@ xsputn_loop_done:
 			{
 				// Restore the correct colours.
 				Colour();
-				::std::streamsize
+				std::streamsize
 					wrote = buffer_.sputn(s, esc - s);
 				ret += wrote;
 				if (wrote != esc - s)

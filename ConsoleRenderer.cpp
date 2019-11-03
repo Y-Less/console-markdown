@@ -94,7 +94,7 @@ void rndr_blockcode(struct buf *ob, struct buf *text, void *opaque)
 	// Just indent it all 4 spaces.
 	if (text && text->size)
 	{
-		::std::string
+		std::string
 			code(text->data, text->size);
 
 		std::string::size_type
@@ -146,8 +146,8 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 			{
 				bufputc(ob, '\n');
 			}
-			::std::string
-				out = cmdmd::CPP(::std::string(text->data, text->size));
+			std::string
+				out = cmdmd::CPP(std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
 			bufputc(ob, '\n');
 			return;
@@ -158,8 +158,8 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 			{
 				bufputc(ob, '\n');
 			}
-			::std::string
-				out = cmdmd::Pawn(::std::string(text->data, text->size));
+			std::string
+				out = cmdmd::Pawn(std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
 			bufputc(ob, '\n');
 			return;
@@ -421,17 +421,17 @@ void rndr_hrule(struct buf *ob, void *opaque)
 }
 
 /* exported renderer structures */
-::std::string cmdmd::Render(std::string const & input)
+std::string cmdmd::Render(std::string const & input)
 {
 	return cmdmd::Render(input.c_str(), input.length());
 }
 
-::std::string cmdmd::Render(char const * input)
+std::string cmdmd::Render(char const * input)
 {
 	return cmdmd::Render(input, strlen(input));
 }
 
-::std::string cmdmd::Render(char const * input, size_t len)
+std::string cmdmd::Render(char const * input, size_t len)
 {
 	static struct mkd_renderer
 		consoleRenderer =
@@ -502,7 +502,7 @@ void rndr_hrule(struct buf *ob, void *opaque)
 	consoleRenderer.opaque = reinterpret_cast<void *>(&data);
 	markdown(ob, &ib, &consoleRenderer);
 
-	::std::string
+	std::string
 		ret(ob->data, ob->size);
 
 	bufrelease(ob);
@@ -516,7 +516,7 @@ void cmdmd::Init()
 	ColouredBuffer<wchar_t>::StandardInstall();
 }
 
-::std::string
+std::string
 	cmdmd::
 	Literals::
 	operator "" _cmdmd(char const * s, size_t len)
@@ -524,7 +524,7 @@ void cmdmd::Init()
 	return ::cmdmd::Render(s, len);
 }
 
-::std::string
+std::string
 	cmdmd::
 	Literals::
 	operator "" _md(char const * s, size_t len)
