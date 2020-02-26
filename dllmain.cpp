@@ -11,24 +11,24 @@
     #define CONSOLECOLOUR_API __declspec(dllimport)
 #endif
 
-// This is an example of an exported function.
-CONSOLECOLOUR_API int ColouriseStdOut(void)
+//#pragma comment(linker, "/EXPORT:ColouriseStdOut=_ColouriseStdOut@0")
+extern "C" CONSOLECOLOUR_API int ColouriseStdOut(void)
 {
     new cmdmd::ColouredBuffer<char>(std::cout, true);
     new cmdmd::ColouredBuffer<wchar_t>(std::wcout, true);
     return 0;
 }
 
-// This is an example of an exported function.
-CONSOLECOLOUR_API int ColouriseStdErr(void)
+//#pragma comment(linker, "/EXPORT:ColouriseStdErr=_ColouriseStdErr@0")
+extern "C" CONSOLECOLOUR_API int ColouriseStdErr(void)
 {
     new cmdmd::ColouredBuffer<char>(std::cerr, true);
     new cmdmd::ColouredBuffer<wchar_t>(std::wcerr, true);
     return 0;
 }
 
-// This is an example of an exported function.
-CONSOLECOLOUR_API int ColouriseStdOutAndStdErr(void)
+//#pragma comment(linker, "/EXPORT:ColouriseStdOutAndStdErr=_ColouriseStdOutAndStdErr@0")
+extern "C" CONSOLECOLOUR_API int ColouriseStdOutAndStdErr(void)
 {
     if (ColouriseStdOut() || ColouriseStdErr())
     {
