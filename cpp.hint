@@ -1,0 +1,2 @@
+#define CONSOLECOLOUR_API __declspec(dllexport)
+#define CONSOLECOLOUR_API __declspec(dllimport)
