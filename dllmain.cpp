@@ -11,11 +11,35 @@
     #define CONSOLECOLOUR_API __declspec(dllimport)
 #endif
 
+#define BUFSIZE 1024
+
+void OpenTemp()
+{
+    CHAR szTempFileName[MAX_PATH];
+    CHAR lpTempPathBuffer[MAX_PATH];
+    //char  chBuffer[BUFSIZE];
+    
+    DWORD dwRetVal = GetTempPathA(MAX_PATH, lpTempPathBuffer); // buffer for path 
+    if (dwRetVal > MAX_PATH || (dwRetVal == 0))
+    {
+        return;// NULL;
+    }
+
+    UINT uRetVal = GetTempFileNameA(lpTempPathBuffer, "stdout", 0, szTempFileName);
+    if (uRetVal == 0)
+    {
+        return;// NULL;
+    }
+
+    freopen(szTempFileName, "w", stdout);
+}
+
 //#pragma comment(linker, "/EXPORT:ColouriseStdOut=_ColouriseStdOut@0")
 extern "C" CONSOLECOLOUR_API int ColouriseStdOut(void)
 {
-    new cmdmd::ColouredBuffer<char>(std::cout, true);
-    new cmdmd::ColouredBuffer<wchar_t>(std::wcout, true);
+    OpenTemp();
+//    new cmdmd::ColouredBuffer<char>(std::cout, true);
+//    new cmdmd::ColouredBuffer<wchar_t>(std::wcout, true);
     return 0;
 }
 
