@@ -1,6 +1,10 @@
 #ifndef _CONSOLE_COLOUR
 #define _CONSOLE_COLOUR
 
+#if defined _WIN32 || defined WIN32
+	#define CONMD_WINDOWS 1
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {

@@ -3,12 +3,7 @@
 #include <sstream>
 #include "console-colour.h"
 
-#if defined _WIN32 || defined WIN32
-	#define CONMD_WINDOWS 1
-#endif
-
 #ifdef CONMD_WINDOWS
-	#include <Windows.h>
 	#include <iostream>
 #endif
 
@@ -63,8 +58,11 @@ private:
 	ColouredBuffer() = delete;
 
 #ifdef CONMD_WINDOWS
-	bool
+	bool const
 		coloured_;
+
+	ostream_type*
+		src_;
 
 	struct stream_s* const
 		stream_;
@@ -75,47 +73,41 @@ private:
 	template <>
 	size_type WriteColouredX<char>(char const * data, size_type len)
 	{
-		return ::WriteColouredA(data, len, stream_);
+		bool tmp = stream_->Coloured;
+		stream_->Coloured = coloured_;
+		auto ret = ::WriteColouredA(data, (int)len, stream_);
+		stream_->Coloured = tmp;
+		return ret;
 	}
 
 	template <>
 	size_type WriteColouredX<wchar_t>(wchar_t const * data, size_type len)
 	{
-		return ::WriteColouredA(data, len, stream_);
+		bool tmp = stream_->Coloured;
+		stream_->Coloured = coloured_;
+		auto ret = ::WriteColouredW(data, (int)len, stream_);
+		stream_->Coloured = tmp;
+		return ret;
 	}
-
 
 #endif
 
 public:
 
 #ifdef CONMD_WINDOWS
-	//ColouredBuffer(streambuf_type & underlying, bool coloured, bool err)
-	//:
-	//	buffer_(underlying),
-	//	coloured_(coloured),
-	//	console_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
-	//	src_(nullptr),
-	//	attr0_(0),
-	//	attr1_(0),
-	//	attr2_(0),
-	//	attr3_(0)
-	//{
-	//	CONSOLE_SCREEN_BUFFER_INFO
-	//		info;
-	//	GetConsoleScreenBufferInfo(console_, &info);
-	//	default_ = info.wAttributes;
-	//	colour_ = default_;
-	//}
-
+	// cons
 	ColouredBuffer(ostream_type & src, bool coloured, bool err)
 	:
 		buffer_(*src.rdbuf()),
 		coloured_(coloured),
+		src_(&src),
 		stream_(err ? &gCErr : &gCOut)
 	{
+		src_->rdbuf(this);
+		InitStreamHooks();
 	}
 
+	// dest
 	~ColouredBuffer()
 	{
 		if (src_)
@@ -124,13 +116,6 @@ public:
 		}
 	}
 #else
-	// cons
-	//ColouredBuffer(streambuf_type & underlying, bool coloured, bool err)
-	//:
-	//	buffer_(underlying)
-	//{
-	//}
-
 	// cons
 	ColouredBuffer(ostream_type & src, bool coloured, bool err)
 	:
@@ -149,7 +134,7 @@ public:
 #ifdef CONMD_WINDOWS
 		char_type
 			s = (char_type)c;
-		return WriteColouredX<char_type>(&s, 1);
+		return (int)WriteColouredX<char_type>(&s, 1);
 #else
 		return buffer_.sputc(c);
 #endif
@@ -159,7 +144,7 @@ protected:
 	size_type xsputn(char_type const * s, size_type n) override
 	{
 #ifdef CONMD_WINDOWS
-		return WriteColouredX<char_type>(s, n);
+		return (int)WriteColouredX<char_type>(s, n);
 #else
 		return buffer_.sputn(s, n);
 #endif
@@ -170,7 +155,8 @@ protected:
 #ifdef CONMD_WINDOWS
 		// If they flush mid sequence there's not a lot we can do about it!  We can't keep buffering
 		// characters under the hood, even via a state machine, if they explicitly requested a flush.
-		::Backout();
+		::Backout(stream_);
+		return 0;
 #else
 		return buffer_.pubsync();
 #endif
@@ -186,9 +172,9 @@ template class ColouredBuffer<char>;
 template class ColouredBuffer<wchar_t>;
 template class ColouredBuffer<char>;
 template class ColouredBuffer<wchar_t>;
-};
 
 #ifdef CONMD_WINDOWS
-	//#pragma warning(pop)
+	#pragma warning(pop)
 #endif
+};
 

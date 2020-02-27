@@ -459,13 +459,19 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 
 int WriteColouredA(char const * s, int n, struct stream_s* const stream)
 {
+	subhook_remove(WriteConsoleA_);
+	subhook_remove(WriteConsoleW_);
 	char const
 		* cur,
 		* start = s,
 		* end = s + n;
 	// Just in case.
 	if (n == 0 || s == nullptr)
+	{
+		subhook_install(WriteConsoleW_);
+		subhook_install(WriteConsoleA_);
 		return 0;
+	}
 	int
 		ret = 0;
 	for (; ; )
@@ -522,7 +528,11 @@ WriteColoured_loop_done:
 				wrote = OutputA(s, esc - s, stream);
 			ret += wrote;
 			if (wrote != esc - s)
+			{
+				subhook_install(WriteConsoleW_);
+				subhook_install(WriteConsoleA_);
 				return s - start + wrote;
+			}
 		}
 		s = esc + 1;
 		switch (stream->State)
@@ -542,18 +552,28 @@ WriteColoured_loop_done:
 	}
 	// Restore the correct colours.
 	Colour(stream);
-	return s - start + OutputA(s, end - s, stream);
+	int
+		wrote = OutputA(s, end - s, stream);
+	subhook_install(WriteConsoleW_);
+	subhook_install(WriteConsoleA_);
+	return s - start + wrote;
 }
 
 int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
 {
+	subhook_remove(WriteConsoleA_);
+	subhook_remove(WriteConsoleW_);
 	wchar_t const
 		* cur,
 		* start = s,
 		* end = s + n;
 	// Just in case.
 	if (n == 0 || s == nullptr)
+	{
+		subhook_install(WriteConsoleW_);
+		subhook_install(WriteConsoleA_);
 		return 0;
+	}
 	int
 		ret = 0;
 	for (; ; )
@@ -610,7 +630,11 @@ WriteColoured_loop_done:
 				wrote = OutputW(s, esc - s, stream);
 			ret += wrote;
 			if (wrote != esc - s)
+			{
+				subhook_install(WriteConsoleW_);
+				subhook_install(WriteConsoleA_);
 				return s - start + wrote;
+			}
 		}
 		s = esc + 1;
 		switch (stream->State)
@@ -630,7 +654,11 @@ WriteColoured_loop_done:
 	}
 	// Restore the correct colours.
 	Colour(stream);
-	return s - start + OutputW(s, end - s, stream);
+	int
+		wrote = OutputW(s, end - s, stream);
+	subhook_install(WriteConsoleW_);
+	subhook_install(WriteConsoleA_);
+	return s - start + wrote;
 }
 
 BOOL
@@ -643,7 +671,15 @@ Hook_WriteConsoleA(
 	_Reserved_ LPVOID lpReserved
 )
 {
-	int num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gCOut);
+	int num = 0;
+	if (hConsoleOutput == gCOut.Handle)
+	{
+		num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gCOut);
+	}
+	if (hConsoleOutput == gCErr.Handle)
+	{
+		num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gCErr);
+	}
 	if (lpNumberOfCharsWritten)
 	{
 		*lpNumberOfCharsWritten = num;
@@ -661,7 +697,15 @@ Hook_WriteConsoleW(
 	_Reserved_ LPVOID lpReserved
 )
 {
-	int num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gCOut);
+	int num = 0;
+	if (hConsoleOutput == gCOut.Handle)
+	{
+		num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gCOut);
+	}
+	if (hConsoleOutput == gCErr.Handle)
+	{
+		num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gCErr);
+	}
 	if (lpNumberOfCharsWritten)
 	{
 		*lpNumberOfCharsWritten = num;
@@ -676,10 +720,11 @@ void InitStreamHooks()
 	gCOut.Handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	gCErr.Handle = GetStdHandle(STD_ERROR_HANDLE);
 
-	GetConsoleScreenBufferInfo(gCOut.Handle, &info);
-	gCOut.CurrentStyle = gCOut.DefaultStyle = info.wAttributes;
 	GetConsoleScreenBufferInfo(gCErr.Handle, &info);
 	gCErr.CurrentStyle = gCErr.DefaultStyle = info.wAttributes;
+
+	GetConsoleScreenBufferInfo(gCOut.Handle, &info);
+	gCOut.CurrentStyle = gCOut.DefaultStyle = info.wAttributes;
 
 	if (!WriteConsoleA_)
 	{

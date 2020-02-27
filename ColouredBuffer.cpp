@@ -28,43 +28,6 @@ void
 #endif
 }
 
-#ifdef CONMD_WINDOWS
-template <>
-char const *
-	ColouredBuffer<char>::
-	wstrchr(char const * s, char const n)
-{
-	return strchr(s, n);
-}
-
-template <>
-wchar_t const *
-	ColouredBuffer<wchar_t>::
-	wstrchr(wchar_t const * s, wchar_t const n)
-{
-	return wcschr(s, n);
-}
-
-template <>
-std::streamsize
-	ColouredBuffer<char>::
-	wstrout(char const * s)
-{
-	return buffer_.sputn(s, strlen(s));
-}
-
-template <>
-std::streamsize
-	ColouredBuffer<wchar_t>::
-	wstrout(char const * s)
-{
-	wchar_t w[12];
-	size_t conv;
-	mbstowcs_s(&conv, w, 12, s, 12);
-	return buffer_.sputn(w, wcslen(w));
-}
-#endif
-
 #if defined _DEBUG
 	void DumpColouredBufferExamples()
 	{
