@@ -1,4 +1,5 @@
 #include "console-colour.h"
+#include <stdio.h>
 
 enum STATE_E
 {
@@ -49,7 +50,7 @@ struct stream_s
 		DefaultStyle,
 		CurrentStyle;
 
-	uint8_t
+	unsigned char
 		Attr0,
 		Attr1,
 		Attr2,
@@ -123,8 +124,8 @@ struct stream_s
 
 void InitStreamHooks()
 {
-	gCOut->Handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	gCErr->Handle = GetStdHandle(STD_ERROR_HANDLE);
+	gCOut.Handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	gCErr.Handle = GetStdHandle(STD_ERROR_HANDLE);
 }
 
 static void Colour(struct stream_s * const stream)
@@ -192,20 +193,20 @@ static void Backout(struct stream_s * const stream)
 	}
 	if (backout[0])
 	{
-		Colour();
-		wstrout(backout);
+		Colour(stream);
+		OutputA(backout, strlen(backout), stream);
 	}
 	stream->State = STATE_NONE;
 	stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = 0;
 }
 
-static WORD GetColour(uint8_t attr)
+static WORD GetColour(unsigned char attr, struct stream_s* const stream)
 {
 	switch (attr)
 	{
 	case 0:
 		// Default.
-		return default_;
+		return stream->DefaultStyle;
 	case 1:
 		// Bold.
 		return FOREGROUND_INTENSITY;
@@ -260,18 +261,18 @@ static WORD GetColour(uint8_t attr)
 
 static void GetColours(struct stream_s * const stream)
 {
-	CurrentStyle = GetColour(stream->Attr0);
+	stream->CurrentStyle = GetColour(stream->Attr0, stream);
 	if (stream->Attr1)
 	{
-		CurrentStyle |= GetColour(stream->Attr1);
+		stream->CurrentStyle |= GetColour(stream->Attr1, stream);
 	}
 	if (stream->Attr2)
 	{
-		CurrentStyle |= GetColour(stream->Attr2);
+		stream->CurrentStyle |= GetColour(stream->Attr2, stream);
 	}
 	if (stream->Attr3)
 	{
-		CurrentStyle |= GetColour(stream->Attr3);
+		stream->CurrentStyle |= GetColour(stream->Attr3, stream);
 	}
 }
 
@@ -285,11 +286,11 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		{
 			switch (c)
 			{
-			case 29; // '\x1D', Group separator.
+			case 29: // '\x1D', Group separator.
 				return /*stream->*/OutputC(10, stream); // `\n`
-			case 31; // '\x1F', Unit separator.
+			case 31: // '\x1F', Unit separator.
 				return /*stream->*/OutputC(10, stream); // `\n`
-			case 30; // '\x1E', Record separator.
+			case 30: // '\x1E', Record separator.
 				return 0;
 			}
 		}
@@ -317,26 +318,26 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_START:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr0 = (uint8_t)(c - '0');
+			stream->Attr0 = (unsigned char)(c - '0');
 			stream->State = STATE_A00;
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_A00:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr0 = stream->Attr0 * 10 + (uint8_t)(c - '0');
+			stream->Attr0 = stream->Attr0 * 10 + (unsigned char)(c - '0');
 			stream->State = STATE_A01;
 		}
 		else if (c == ';')
@@ -348,7 +349,7 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
@@ -362,14 +363,14 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_S0:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr1 = (uint8_t)(c - '0');
+			stream->Attr1 = (unsigned char)(c - '0');
 			stream->State = STATE_A10;
 		}
 		else if (c == 'm')
@@ -379,14 +380,14 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_A10:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr1 = stream->Attr1 * 10 + (uint8_t)(c - '0');
+			stream->Attr1 = stream->Attr1 * 10 + (unsigned char)(c - '0');
 			stream->State = STATE_A11;
 		}
 		else if (c == ';')
@@ -398,7 +399,7 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
@@ -412,14 +413,14 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_S1:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr2 = (uint8_t)(c - '0');
+			stream->Attr2 = (unsigned char)(c - '0');
 			stream->State = STATE_A20;
 		}
 		else if (c == 'm')
@@ -429,14 +430,14 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_A20:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr2 = stream->Attr2 * 10 + (uint8_t)(c - '0');
+			stream->Attr2 = stream->Attr2 * 10 + (unsigned char)(c - '0');
 			stream->State = STATE_A21;
 		}
 		else if (c == ';')
@@ -448,7 +449,7 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
@@ -462,14 +463,14 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_S2:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr3 = (uint8_t)(c - '0');
+			stream->Attr3 = (unsigned char)(c - '0');
 			stream->State = STATE_A30;
 		}
 		else if (c == 'm')
@@ -479,14 +480,14 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
 	case STATE_A30:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr3 = stream->Attr3 * 10 + (uint8_t)(c - '0');
+			stream->Attr3 = stream->Attr3 * 10 + (unsigned char)(c - '0');
 			stream->State = STATE_A31;
 		}
 		else if (c == 'm')
@@ -496,7 +497,7 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		return 0;
@@ -508,7 +509,7 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else
 		{
-			Backout();
+			Backout(stream);
 			break;
 		}
 		break;
@@ -520,11 +521,11 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = 0;
 		return 0;
 	}
-	Colour();
+	Colour(stream);
 	return /*stream->*/OutputC(c, stream);
 }
 
-int WriteColouredA(char const * s, int n) override
+int WriteColouredA(char const * s, int n, struct stream_s* const stream)
 {
 	char const
 		* cur,
@@ -537,32 +538,32 @@ int WriteColouredA(char const * s, int n) override
 		ret = 0;
 	for (; ; )
 	{
-		while (*s && !(state_ == STATE_E::NONE || state_ == STATE_E::SKIP))
+		while (*s && !(stream->State == STATE_NONE || stream->State == STATE_SKIP))
 		{
 			RunStateMachine(*s++, stream);
 		}
 		char const *
 			esc = s;
-		if (coloured_)
+		if (stream->Coloured)
 		{
 			for (cur = s; cur != end; ++cur)
 			{
 				switch (*cur)
 				{
 				case '\x1B': // ESC.
-					state_ = STATE_E::ESC;
+					stream->State = STATE_ESC;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1D': // Group separator.
-					state_ = STATE_E::EXTRA_NL;
+					stream->State = STATE_EXTRA_NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1F': // Unit separator.
-					state_ = STATE_E::EXTRA_2NL;
+					stream->State = STATE_EXTRA_2NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1E': // Record separator.
-					state_ = STATE_E::NONE;
+					stream->State = STATE_NONE;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				}
@@ -578,7 +579,7 @@ WriteColoured_loop_done:
 			esc = strchr(s, '\x1B');
 			if (esc == nullptr)
 				break;
-			state_ = STATE_E::ESC;
+			stream->State = STATE_ESC;
 		}
 		// Write the bit before the escape sequence.
 		if (esc != s)
@@ -592,27 +593,27 @@ WriteColoured_loop_done:
 				return s - start + wrote;
 		}
 		s = esc + 1;
-		switch (state_)
+		switch (stream->State)
 		{
-		case STATE_E::EXTRA_2NL:
+		case STATE_EXTRA_2NL:
 			OutputC(10, stream);
-		case STATE_E::EXTRA_NL:
+		case STATE_EXTRA_NL:
 			OutputC(10, stream);
 			break;
-			/*case STATE_E::EXTRA_SPACE:
+			/*case STATE_EXTRA_SPACE:
 			OutputA(' ');
 			break;*/
 		default:
 			continue;
 		}
-		state_ = STATE_E::NONE;
+		stream->State = STATE_NONE;
 	}
 	// Restore the correct colours.
 	Colour(stream);
 	return s - start + OutputA(s, end - s, stream);
 }
 
-int WriteColouredW(wchar_t const * s, int n)
+int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
 {
 	wchar_t const
 		* cur,
@@ -625,32 +626,32 @@ int WriteColouredW(wchar_t const * s, int n)
 		ret = 0;
 	for (; ; )
 	{
-		while (*s && !(state_ == STATE_E::NONE || state_ == STATE_E::SKIP))
+		while (*s && !(stream->State == STATE_NONE || stream->State == STATE_SKIP))
 		{
 			RunStateMachine(*s++, stream);
 		}
 		wchar_t const *
 			esc = s;
-		if (coloured_)
+		if (stream->Coloured)
 		{
 			for (cur = s; cur != end; ++cur)
 			{
 				switch (*cur)
 				{
 				case '\x1B': // ESC.
-					state_ = STATE_E::ESC;
+					stream->State = STATE_ESC;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1D': // Group separator.
-					state_ = STATE_E::EXTRA_NL;
+					stream->State = STATE_EXTRA_NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1F': // Unit separator.
-					state_ = STATE_E::EXTRA_2NL;
+					stream->State = STATE_EXTRA_2NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1E': // Record separator.
-					state_ = STATE_E::NONE;
+					stream->State = STATE_NONE;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				}
@@ -663,10 +664,10 @@ WriteColoured_loop_done:
 		}
 		else
 		{
-			esc = wstrchr(s, '\x1B');
+			esc = wcschr(s, '\x1B');
 			if (esc == nullptr)
 				break;
-			state_ = STATE_E::ESC;
+			stream->State = STATE_ESC;
 		}
 		// Write the bit before the escape sequence.
 		if (esc != s)
@@ -680,20 +681,20 @@ WriteColoured_loop_done:
 				return s - start + wrote;
 		}
 		s = esc + 1;
-		switch (state_)
+		switch (stream->State)
 		{
-		case STATE_E::EXTRA_2NL:
+		case STATE_EXTRA_2NL:
 			OutputC(10, stream);
-		case STATE_E::EXTRA_NL:
+		case STATE_EXTRA_NL:
 			OutputC(10, stream);
 			break;
-			/*case STATE_E::EXTRA_SPACE:
+			/*case STATE_EXTRA_SPACE:
 			OutputW(' ');
 			break;*/
 		default:
 			continue;
 		}
-		state_ = STATE_E::NONE;
+		stream->State = STATE_NONE;
 	}
 	// Restore the correct colours.
 	Colour(stream);
