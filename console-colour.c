@@ -87,6 +87,12 @@ void Backout(struct stream_s * const stream)
 	case STATE_A30:
 		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3);
 		break;
+	case STATE_S3:
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d;", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3);
+		break;
+	case STATE_A40:
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3, stream->Attr4);
+		break;
 	}
 	if (backout[0])
 	{
@@ -94,7 +100,7 @@ void Backout(struct stream_s * const stream)
 		OutputA(backout, (int)strlen(backout), stream);
 	}
 	stream->State = STATE_NONE;
-	stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = 0;
+	stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = stream->Attr4 = 0;
 }
 
 static WORD GetColour(unsigned char attr, struct stream_s* const stream)
@@ -170,6 +176,10 @@ static void GetColours(struct stream_s * const stream)
 	if (stream->Attr3)
 	{
 		stream->CurrentStyle |= GetColour(stream->Attr3, stream);
+	}
+	if (stream->Attr4)
+	{
+		stream->CurrentStyle |= GetColour(stream->Attr4, stream);
 	}
 }
 
@@ -341,6 +351,41 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		{
 			stream->Attr3 = stream->Attr3 * 10 + (unsigned char)(c - '0');
 		}
+		else if (c == ';')
+			stream->State = STATE_S3;
+		else if (c == 'm')
+		{
+			stream->State = STATE_DONE;
+			break;
+		}
+		else
+		{
+			Backout(stream);
+			break;
+		}
+		return 0;
+	case STATE_S3:
+		if ('0' <= c && c <= '9')
+		{
+			stream->Attr4 = (unsigned char)(c - '0');
+			stream->State = STATE_A40;
+		}
+		else if (c == 'm')
+		{
+			stream->State = STATE_DONE;
+			break;
+		}
+		else
+		{
+			Backout(stream);
+			break;
+		}
+		return 0;
+	case STATE_A40:
+		if ('0' <= c && c <= '9')
+		{
+			stream->Attr4 = stream->Attr4 * 10 + (unsigned char)(c - '0');
+		}
 		else if (c == 'm')
 		{
 			stream->State = STATE_DONE;
@@ -357,7 +402,7 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	{
 		GetColours(stream);
 		stream->State = STATE_NONE;
-		stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = 0;
+		stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = stream->Attr4 = 0;
 		return 0;
 	}
 	Colour(stream);

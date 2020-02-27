@@ -27,6 +27,8 @@ enum STATE_E
 	STATE_A20,         // Saw a number.
 	STATE_S2,          // Saw a semi-colon.
 	STATE_A30,         // Saw a number.
+	STATE_S3,          // Saw a semi-colon.
+	STATE_A40,         // Saw a number.
 	STATE_DONE,        // Complete.
 	STATE_EXTRA_NL,    // Insert one extra new line.
 	STATE_EXTRA_2NL,   // Insert two extra new lines.
@@ -58,7 +60,8 @@ struct stream_s
 		Attr0,
 		Attr1,
 		Attr2,
-		Attr3;
+		Attr3,
+		Attr4;
 };
 
 #else
