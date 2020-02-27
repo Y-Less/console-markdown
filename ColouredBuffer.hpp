@@ -98,6 +98,7 @@ private:
 		STATE_EXTRA_NL, // Insert one extra new line.
 		STATE_EXTRA_2NL, // Insert two extra new lines.
 		STATE_EXTRA_SPACE, // Insert one extra space.
+		STATE_SKIP,  // Multi-byte character.
 	} state_ = STATE_NONE;
 
 	void Backout()
@@ -108,6 +109,7 @@ private:
 		switch (state_)
 		{
 		case STATE_NONE:
+		case STATE_SKIP:
 			return;
 		case STATE_ESC:
 			sprintf_s(backout, 12, "\x1B");
@@ -248,6 +250,22 @@ private:
 	WORD
 		colour_;
 #endif
+
+	template <typename C2>
+	inline bool Unicode(C2 c);
+
+	template <>
+	inline bool Unicode<char>(char c)
+	{
+		return (c & 0x80) != 0;
+	}
+
+	template <>
+	inline bool Unicode<wchar_t>(wchar_t c)
+	{
+		return (c & 0x8000) != 0;
+	}
+
 	template <typename C2>
 	size_type DoWriteConsole(C2 const * c, size_type len)
 	{
@@ -405,6 +423,18 @@ public:
 				state_ = STATE_ESC;
 				return traits_type::not_eof(0);
 			}
+			else if (Unicode<char_type>(c))
+			{
+				// Start of a multi-byte character.  Skip all checks on the next one.
+				state_ = STATE_SKIP;
+			}
+			break;
+		case STATE_SKIP:
+			if (!Unicode<char_type>(c))
+			{
+				state_ = STATE_NONE;
+			}
+			break;
 		case STATE_ESC:
 			if (c == '[')
 			{
@@ -637,7 +667,7 @@ protected:
 			ret = 0;
 		for (; ; )
 		{
-			while (*s && state_ != STATE_NONE)
+			while (*s && !(state_ == STATE_NONE || state_ == STATE_SKIP))
 			{
 				overflow(*s++);
 			}
