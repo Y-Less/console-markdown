@@ -1,75 +1,9 @@
 #include "console-colour.h"
-#include <stdio.h>
-
-enum STATE_E
-{
-	STATE_NONE,
-	STATE_ESC,         // Saw `\x1B`.
-	STATE_START,       // Saw `[`.
-	STATE_A00,         // Saw a number.
-	STATE_A01,         // Saw two numbers.
-	STATE_S0,          // Saw a semi-colon.
-	STATE_A10,         // Saw a number.
-	STATE_A11,         // Saw two numbers.
-	STATE_S1,          // Saw a semi-colon.
-	STATE_A20,         // Saw a number.
-	STATE_A21,         // Saw two numbers.
-	STATE_S2,          // Saw a semi-colon.
-	STATE_A30,         // Saw a number.
-	STATE_A31,         // Saw two numbers.
-	STATE_DONE,        // Complete.
-	STATE_EXTRA_NL,    // Insert one extra new line.
-	STATE_EXTRA_2NL,   // Insert two extra new lines.
-	STATE_EXTRA_SPACE, // Insert one extra space.
-	STATE_SKIP,        // Multi-byte character.
-};
-
-struct stream_s;
-
-//typedef int (* OutputC_t)(wchar_t c, struct stream_s * const stream);
-//typedef int (* OutputA_t)(char const * c, int len, struct stream_s * const stream);
-//typedef int (* OutputW_t)(wchar_t const * c, int len, struct stream_s * const stream);
-
-struct stream_s
-{
-	wchar_t
-		UnicodeMask;
-
-	enum STATE_E 
-		State;
-
-	bool
-	//	Wide,
-		Coloured,
-		Error;
-
-	HANDLE
-		Handle;
-
-	WORD
-		DefaultStyle,
-		CurrentStyle;
-
-	unsigned char
-		Attr0,
-		Attr1,
-		Attr2,
-		Attr3;
-	
-	//OutputC_t
-	//	OutputC;
-	//
-	//OutputA_t
-	//	OutputA;
-	//
-	//OutputW_t
-	//	OutputW;
-	
-	void *
-		Data;
-};
 
 #ifdef CONMD_WINDOWS
+
+#include <stdio.h>
+#include "subhook/subhook.h"
 
 static int OutputC(wchar_t c, struct stream_s * const stream)
 {
@@ -122,11 +56,9 @@ struct stream_s
 		true,
 	};
 
-void InitStreamHooks()
-{
-	gCOut.Handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	gCErr.Handle = GetStdHandle(STD_ERROR_HANDLE);
-}
+subhook_t
+	WriteConsoleA_ = 0,
+	WriteConsoleW_ = 0;
 
 static void Colour(struct stream_s * const stream)
 {
@@ -699,6 +631,78 @@ WriteColoured_loop_done:
 	// Restore the correct colours.
 	Colour(stream);
 	return s - start + OutputW(s, end - s, stream);
+}
+
+BOOL
+WINAPI
+Hook_WriteConsoleA(
+	_In_ HANDLE hConsoleOutput,
+	_In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
+	_In_ DWORD nNumberOfCharsToWrite,
+	_Out_opt_ LPDWORD lpNumberOfCharsWritten,
+	_Reserved_ LPVOID lpReserved
+)
+{
+	int num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gCOut);
+	if (lpNumberOfCharsWritten)
+	{
+		*lpNumberOfCharsWritten = num;
+	}
+	return num != 0;
+}
+
+BOOL
+WINAPI
+Hook_WriteConsoleW(
+	_In_ HANDLE hConsoleOutput,
+	_In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
+	_In_ DWORD nNumberOfCharsToWrite,
+	_Out_opt_ LPDWORD lpNumberOfCharsWritten,
+	_Reserved_ LPVOID lpReserved
+)
+{
+	int num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gCOut);
+	if (lpNumberOfCharsWritten)
+	{
+		*lpNumberOfCharsWritten = num;
+	}
+	return num != 0;
+}
+
+void InitStreamHooks()
+{
+	CONSOLE_SCREEN_BUFFER_INFO
+		info;
+	gCOut.Handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	gCErr.Handle = GetStdHandle(STD_ERROR_HANDLE);
+
+	GetConsoleScreenBufferInfo(gCOut.Handle, &info);
+	gCOut.CurrentStyle = gCOut.DefaultStyle = info.wAttributes;
+	GetConsoleScreenBufferInfo(gCErr.Handle, &info);
+	gCErr.CurrentStyle = gCErr.DefaultStyle = info.wAttributes;
+
+	if (!WriteConsoleA_)
+	{
+		WriteConsoleA_ = subhook_new((void*)&WriteConsoleA, (void*)&Hook_WriteConsoleA, SUBHOOK_64BIT_OFFSET);
+	}
+	if (WriteConsoleA_)
+	{
+		subhook_install(WriteConsoleA_);
+	}
+	if (!WriteConsoleW_)
+	{
+		WriteConsoleW_ = subhook_new((void*)&WriteConsoleW, (void*)&Hook_WriteConsoleW, SUBHOOK_64BIT_OFFSET);
+	}
+	if (WriteConsoleW_)
+	{
+		subhook_install(WriteConsoleW_);
+	}
+}
+
+#else
+
+void InitStreamHooks()
+{
 }
 
 #endif
