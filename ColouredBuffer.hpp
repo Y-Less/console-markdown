@@ -266,20 +266,10 @@ private:
 		return (c & 0x8000) != 0;
 	}
 
-	template <typename C2>
-	size_type DoWriteConsole(C2 const * c, size_type len)
-	{
-		if (len == 1)
-		{
-			buffer_.sputc(*c);
-		}
-		else
-		{
-			buffer_.sputn(c, len);
-		}
-	}
-
 #ifdef CONMD_WINDOWS
+	template <typename C2>
+	size_type DoWriteConsole(C2 const * c, size_type len);
+
 	template <>
 	size_type DoWriteConsole<wchar_t>(wchar_t const * c, size_type len)
 	{
@@ -296,6 +286,19 @@ private:
 			ret = 0;
 		WriteConsoleA(console_, c, (DWORD)len, &ret, NULL);
 		return (size_type)ret;
+	}
+#else
+	template <typename C2>
+	size_type DoWriteConsole(C2 const * c, size_type len)
+	{
+		if (len == 1)
+		{
+			buffer_.sputc(*c);
+		}
+		else
+		{
+			buffer_.sputn(c, len);
+		}
 	}
 #endif
 
