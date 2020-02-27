@@ -78,28 +78,28 @@ private:
 		attr2_,
 		attr3_;
 
-	enum parser_e
+	enum class STATE_E
 	{
-		STATE_NONE,
-		STATE_ESC,   // Saw `\x1B`.
-		STATE_START, // Saw `[`.
-		STATE_A00,   // Saw a number.
-		STATE_A01,   // Saw two numbers.
-		STATE_S0,    // Saw a semi-colon.
-		STATE_A10,   // Saw a number.
-		STATE_A11,   // Saw two numbers.
-		STATE_S1,    // Saw a semi-colon.
-		STATE_A20,   // Saw a number.
-		STATE_A21,   // Saw two numbers.
-		STATE_S2,    // Saw a semi-colon.
-		STATE_A30,   // Saw a number.
-		STATE_A31,   // Saw two numbers.
-		STATE_DONE,  // Complete.
-		STATE_EXTRA_NL, // Insert one extra new line.
-		STATE_EXTRA_2NL, // Insert two extra new lines.
-		STATE_EXTRA_SPACE, // Insert one extra space.
-		STATE_SKIP,  // Multi-byte character.
-	} state_ = STATE_NONE;
+		NONE,
+		ESC,   // Saw `\x1B`.
+		START, // Saw `[`.
+		A00,   // Saw a number.
+		A01,   // Saw two numbers.
+		S0,    // Saw a semi-colon.
+		A10,   // Saw a number.
+		A11,   // Saw two numbers.
+		S1,    // Saw a semi-colon.
+		A20,   // Saw a number.
+		A21,   // Saw two numbers.
+		S2,    // Saw a semi-colon.
+		A30,   // Saw a number.
+		A31,   // Saw two numbers.
+		DONE,  // Complete.
+		EXTRA_NL, // Insert one extra new line.
+		EXTRA_2NL, // Insert two extra new lines.
+		EXTRA_SPACE, // Insert one extra space.
+		SKIP,  // Multi-byte character.
+	} state_ = STATE_E::NONE;
 
 	void Backout()
 	{
@@ -108,46 +108,46 @@ private:
 		// Run the state machine.
 		switch (state_)
 		{
-		case STATE_NONE:
-		case STATE_SKIP:
+		case STATE_E::NONE:
+		case STATE_E::SKIP:
 			return;
-		case STATE_ESC:
+		case STATE_E::ESC:
 			sprintf_s(backout, 12, "\x1B");
 			break;
-		case STATE_START:
+		case STATE_E::START:
 			sprintf_s(backout, 12, "\x1B[");
 			break;
-		case STATE_A00:
+		case STATE_E::A00:
 			sprintf_s(backout, 12, "\x1B[%d", attr0_);
 			break;
-		case STATE_A01:
+		case STATE_E::A01:
 			sprintf_s(backout, 12, "\x1B[%d", attr0_);
 			break;
-		case STATE_S0:
+		case STATE_E::S0:
 			sprintf_s(backout, 12, "\x1B[%d;", attr0_);
 			break;
-		case STATE_A10:
+		case STATE_E::A10:
 			sprintf_s(backout, 12, "\x1B[%d;%d", attr0_, attr1_);
 			break;
-		case STATE_A11:
+		case STATE_E::A11:
 			sprintf_s(backout, 12, "\x1B[%d;%d", attr0_, attr1_);
 			break;
-		case STATE_S1:
+		case STATE_E::S1:
 			sprintf_s(backout, 12, "\x1B[%d;%d;", attr0_, attr1_);
 			break;
-		case STATE_A20:
+		case STATE_E::A20:
 			sprintf_s(backout, 12, "\x1B[%d;%d;%d", attr0_, attr1_, attr2_);
 			break;
-		case STATE_A21:
+		case STATE_E::A21:
 			sprintf_s(backout, 12, "\x1B[%d;%d;%d", attr0_, attr1_, attr2_);
 			break;
-		case STATE_S2:
+		case STATE_E::S2:
 			sprintf_s(backout, 12, "\x1B[%d;%d;%d;", attr0_, attr1_, attr2_);
 			break;
-		case STATE_A30:
+		case STATE_E::A30:
 			sprintf_s(backout, 12, "\x1B[%d;%d;%d;%d", attr0_, attr1_, attr2_, attr3_);
 			break;
-		case STATE_A31:
+		case STATE_E::A31:
 			sprintf_s(backout, 12, "\x1B[%d;%d;%d;%d", attr0_, attr1_, attr2_, attr3_);
 			break;
 		}
@@ -156,7 +156,7 @@ private:
 			Colour();
 			wstrout(backout);
 		}
-		state_ = STATE_NONE;
+		state_ = STATE_E::NONE;
 		attr0_ = attr1_ = attr2_ = attr3_ = 0;
 	}
 
@@ -390,7 +390,7 @@ public:
 		// Run the state machine.
 		switch (state_)
 		{
-		case STATE_NONE:
+		case STATE_E::NONE:
 			if (coloured_)
 			{
 				switch (c)
@@ -405,25 +405,25 @@ public:
 			}
 			if (c == '\x1B')
 			{
-				state_ = STATE_ESC;
+				state_ = STATE_E::ESC;
 				return traits_type::not_eof(0);
 			}
 			else if (Unicode<char_type>(c))
 			{
 				// Start of a multi-byte character.  Skip all checks on the next one.
-				state_ = STATE_SKIP;
+				state_ = STATE_E::SKIP;
 			}
 			break;
-		case STATE_SKIP:
+		case STATE_E::SKIP:
 			if (!Unicode<char_type>(c))
 			{
-				state_ = STATE_NONE;
+				state_ = STATE_E::NONE;
 			}
 			break;
-		case STATE_ESC:
+		case STATE_E::ESC:
 			if (c == '[')
 			{
-				state_ = STATE_START;
+				state_ = STATE_E::START;
 			}
 			else
 			{
@@ -431,11 +431,11 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_START:
+		case STATE_E::START:
 			if ('0' <= c && c <= '9')
 			{
 				attr0_ = (uint8_t)(c - '0');
-				state_ = STATE_A00;
+				state_ = STATE_E::A00;
 			}
 			else
 			{
@@ -443,17 +443,17 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A00:
+		case STATE_E::A00:
 			if ('0' <= c && c <= '9')
 			{
 				attr0_ = attr0_ * 10 + (uint8_t)(c - '0');
-				state_ = STATE_A01;
+				state_ = STATE_E::A01;
 			}
 			else if (c == ';')
-				state_ = STATE_S0;
+				state_ = STATE_E::S0;
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -462,12 +462,12 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A01:
+		case STATE_E::A01:
 			if (c == ';')
-				state_ = STATE_S0;
+				state_ = STATE_E::S0;
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -476,15 +476,15 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_S0:
+		case STATE_E::S0:
 			if ('0' <= c && c <= '9')
 			{
 				attr1_ = (uint8_t)(c - '0');
-				state_ = STATE_A10;
+				state_ = STATE_E::A10;
 			}
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -493,17 +493,17 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A10:
+		case STATE_E::A10:
 			if ('0' <= c && c <= '9')
 			{
 				attr1_ = attr1_ * 10 + (uint8_t)(c - '0');
-				state_ = STATE_A11;
+				state_ = STATE_E::A11;
 			}
 			else if (c == ';')
-				state_ = STATE_S1;
+				state_ = STATE_E::S1;
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -512,12 +512,12 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A11:
+		case STATE_E::A11:
 			if (c == ';')
-				state_ = STATE_S1;
+				state_ = STATE_E::S1;
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -526,15 +526,15 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_S1:
+		case STATE_E::S1:
 			if ('0' <= c && c <= '9')
 			{
 				attr2_ = (uint8_t)(c - '0');
-				state_ = STATE_A20;
+				state_ = STATE_E::A20;
 			}
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -543,17 +543,17 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A20:
+		case STATE_E::A20:
 			if ('0' <= c && c <= '9')
 			{
 				attr2_ = attr2_ * 10 + (uint8_t)(c - '0');
-				state_ = STATE_A21;
+				state_ = STATE_E::A21;
 			}
 			else if (c == ';')
-				state_ = STATE_S2;
+				state_ = STATE_E::S2;
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -562,12 +562,12 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A21:
+		case STATE_E::A21:
 			if (c == ';')
-				state_ = STATE_S2;
+				state_ = STATE_E::S2;
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -576,15 +576,15 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_S2:
+		case STATE_E::S2:
 			if ('0' <= c && c <= '9')
 			{
 				attr3_ = (uint8_t)(c - '0');
-				state_ = STATE_A30;
+				state_ = STATE_E::A30;
 			}
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -593,15 +593,15 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A30:
+		case STATE_E::A30:
 			if ('0' <= c && c <= '9')
 			{
 				attr3_ = attr3_ * 10 + (uint8_t)(c - '0');
-				state_ = STATE_A31;
+				state_ = STATE_E::A31;
 			}
 			else if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -610,10 +610,10 @@ public:
 				break;
 			}
 			return traits_type::not_eof(0);
-		case STATE_A31:
+		case STATE_E::A31:
 			if (c == 'm')
 			{
-				state_ = STATE_DONE;
+				state_ = STATE_E::DONE;
 				break;
 			}
 			else
@@ -623,10 +623,10 @@ public:
 			}
 			break;
 		}
-		if (state_ == STATE_DONE)
+		if (state_ == STATE_E::DONE)
 		{
 			GetColours();
-			state_ = STATE_NONE;
+			state_ = STATE_E::NONE;
 			attr0_ = attr1_ = attr2_ = attr3_ = 0;
 			return traits_type::not_eof(0);
 		}
@@ -652,7 +652,7 @@ protected:
 			ret = 0;
 		for (; ; )
 		{
-			while (*s && !(state_ == STATE_NONE || state_ == STATE_SKIP))
+			while (*s && !(state_ == STATE_E::NONE || state_ == STATE_E::SKIP))
 			{
 				overflow(*s++);
 			}
@@ -665,19 +665,19 @@ protected:
 					switch (*cur)
 					{
 					case '\x1B': // ESC.
-						state_ = STATE_ESC;
+						state_ = STATE_E::ESC;
 						esc = cur;
 						goto xsputn_loop_done;
 					case '\x1D': // Group separator.
-						state_ = STATE_EXTRA_NL;
+						state_ = STATE_E::EXTRA_NL;
 						esc = cur;
 						goto xsputn_loop_done;
 					case '\x1F': // Unit separator.
-						state_ = STATE_EXTRA_2NL;
+						state_ = STATE_E::EXTRA_2NL;
 						esc = cur;
 						goto xsputn_loop_done;
 					case '\x1E': // Record separator.
-						state_ = STATE_NONE;
+						state_ = STATE_E::NONE;
 						esc = cur;
 						goto xsputn_loop_done;
 					}
@@ -693,7 +693,7 @@ xsputn_loop_done:
 				esc = wstrchr(s, '\x1B');
 				if (esc == nullptr)
 					break;
-				state_ = STATE_ESC;
+				state_ = STATE_E::ESC;
 			}
 			// Write the bit before the escape sequence.
 			if (esc != s)
@@ -709,18 +709,18 @@ xsputn_loop_done:
 			s = esc + 1;
 			switch (state_)
 			{
-			case STATE_EXTRA_2NL:
+			case STATE_E::EXTRA_2NL:
 				DoWriteConsole<char_type>('\n');
-			case STATE_EXTRA_NL:
+			case STATE_E::EXTRA_NL:
 				DoWriteConsole<char_type>('\n');
 				break;
-				/*case STATE_EXTRA_SPACE:
+				/*case STATE_E::EXTRA_SPACE:
 				DoWriteConsole<char_type>(' ');
 				break;*/
 			default:
 				continue;
 			}
-			state_ = STATE_NONE;
+			state_ = STATE_E::NONE;
 		}
 		// Restore the correct colours.
 		Colour();
