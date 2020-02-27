@@ -81,24 +81,24 @@ private:
 	enum class STATE_E
 	{
 		NONE,
-		ESC,   // Saw `\x1B`.
-		START, // Saw `[`.
-		A00,   // Saw a number.
-		A01,   // Saw two numbers.
-		S0,    // Saw a semi-colon.
-		A10,   // Saw a number.
-		A11,   // Saw two numbers.
-		S1,    // Saw a semi-colon.
-		A20,   // Saw a number.
-		A21,   // Saw two numbers.
-		S2,    // Saw a semi-colon.
-		A30,   // Saw a number.
-		A31,   // Saw two numbers.
-		DONE,  // Complete.
-		EXTRA_NL, // Insert one extra new line.
-		EXTRA_2NL, // Insert two extra new lines.
+		ESC,         // Saw `\x1B`.
+		START,       // Saw `[`.
+		A00,         // Saw a number.
+		A01,         // Saw two numbers.
+		S0,          // Saw a semi-colon.
+		A10,         // Saw a number.
+		A11,         // Saw two numbers.
+		S1,          // Saw a semi-colon.
+		A20,         // Saw a number.
+		A21,         // Saw two numbers.
+		S2,          // Saw a semi-colon.
+		A30,         // Saw a number.
+		A31,         // Saw two numbers.
+		DONE,        // Complete.
+		EXTRA_NL,    // Insert one extra new line.
+		EXTRA_2NL,   // Insert two extra new lines.
 		EXTRA_SPACE, // Insert one extra space.
-		SKIP,  // Multi-byte character.
+		SKIP,        // Multi-byte character.
 	} state_ = STATE_E::NONE;
 
 	void Backout()
