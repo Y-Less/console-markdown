@@ -52,6 +52,10 @@ private:
 		T
 		traits_type;
 
+	typedef
+		std::streamsize
+		size_type;
+
 	streambuf_type &
 		buffer_;
 
@@ -60,7 +64,7 @@ private:
 #ifdef CONMD_WINDOWS
 	char_type const * wstrchr(char_type const * s, char_type const n);
 
-	std::streamsize wstrout(char const * s);
+	size_type wstrout(char const * s);
 
 	bool const
 		coloured_;
@@ -244,6 +248,44 @@ private:
 	WORD
 		colour_;
 #endif
+	template <typename C2>
+	size_type DoWriteConsole(C2 const * c, size_type len)
+	{
+		if (len == 1)
+		{
+			buffer_.sputc(*c);
+		}
+		else
+		{
+			buffer_.sputn(c, len);
+		}
+	}
+
+#ifdef CONMD_WINDOWS
+	template <>
+	size_type DoWriteConsole<wchar_t>(wchar_t const * c, size_type len)
+	{
+		DWORD
+			ret = 0;
+		WriteConsoleW(stdout_, &c, (DWORD)len, &ret, NULL);
+		return (int_type)ret;
+	}
+
+	template <>
+	size_type DoWriteConsole<char>(char const * c, size_type len)
+	{
+		DWORD
+			ret = 0;
+		WriteConsoleA(stdout_, &c, (DWORD)len, &ret, NULL);
+		return (int_type)ret;
+	}
+#endif
+
+	template <typename C2>
+	size_type DoWriteConsole(C2 const c)
+	{
+		return DoWriteConsole<C2>(&c, 1);
+	}
 
 public:
 
@@ -325,9 +367,9 @@ public:
 				switch (c)
 				{
 				case '\x1D': // Group separator.
-					buffer_.sputc('\n');
+					DoWriteConsole<char_type>('\n');
 				case '\x1F': // Unit separator.
-					return buffer_.sputc('\n');
+					return (int_type)DoWriteConsole<char_type>('\n');
 				case '\x1E': // Record separator.
 					return traits_type::not_eof(0);
 				}
@@ -548,14 +590,14 @@ public:
 			return traits_type::not_eof(0);
 		}
 		Colour();
-		return buffer_.sputc((char_type)c);
+		return (int_type)DoWriteConsole<char_type>((char_type)c);
 #else
-		return buffer_.sputc(c);
+		return (int_type)DoWriteConsole<char_type>(c);
 #endif
 	}
 
 protected:
-	std::streamsize xsputn(char_type const * s, std::streamsize n) override
+	size_type xsputn(char_type const * s, size_type n) override
 	{
 #ifdef CONMD_WINDOWS
 		char_type const
@@ -565,7 +607,7 @@ protected:
 		// Just in case.
 		if (n == 0 || s == nullptr)
 			return 0;
-		std::streamsize
+		size_type
 			ret = 0;
 		for (; ; )
 		{
@@ -617,8 +659,8 @@ xsputn_loop_done:
 			{
 				// Restore the correct colours.
 				Colour();
-				std::streamsize
-					wrote = buffer_.sputn(s, esc - s);
+				size_type
+					wrote = DoWriteConsole<char_type>(s, esc - s);
 				ret += wrote;
 				if (wrote != esc - s)
 					return s - start + wrote;
@@ -627,12 +669,12 @@ xsputn_loop_done:
 			switch (state_)
 			{
 			case STATE_EXTRA_2NL:
-				buffer_.sputc('\n');
+				DoWriteConsole<char_type>('\n');
 			case STATE_EXTRA_NL:
-				buffer_.sputc('\n');
+				DoWriteConsole<char_type>('\n');
 				break;
 				/*case STATE_EXTRA_SPACE:
-				buffer_.sputc(' ');
+				DoWriteConsole<char_type>(' ');
 				break;*/
 			default:
 				continue;
@@ -641,21 +683,21 @@ xsputn_loop_done:
 		}
 		// Restore the correct colours.
 		Colour();
-		return s - start + buffer_.sputn(s, end - s);
+		return s - start + DoWriteConsole<char_type>(s, end - s);
 #else
-		return buffer_.sputn(s, n);
+		return DoWriteConsole<char_type>(s, n);
 #endif
 	}
 
-#ifdef CONMD_WINDOWS
 	int sync() override
 	{
+#ifdef CONMD_WINDOWS
 		// If they flush mid sequence there's not a lot we can do about it!  We can't keep buffering
 		// characters under the hood, even via a state machine, if they explicitly requested a flush.
 		Backout();
+#endif
 		return buffer_.pubsync();
 	}
-#endif
 };
 
 #ifdef CONMD_WINDOWS
