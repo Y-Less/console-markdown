@@ -13,7 +13,7 @@
 
 namespace cmdmd
 {
-template <class C, class T = std::char_traits<C>, class A = std::allocator<C>>
+template <class C, bool E, class T = std::char_traits<C>, class A = std::allocator<C>>
 class ColouredBuffer : public std::basic_stringbuf<C, T, A>
 {
 public:
@@ -163,9 +163,9 @@ private:
 	void Colour()
 	{
 		if (coloured_)
-			SetConsoleTextAttribute(stdout_, colour_);
+			SetConsoleTextAttribute(console_, colour_);
 		else
-			SetConsoleTextAttribute(stdout_, default_);
+			SetConsoleTextAttribute(console_, default_);
 	}
 
 	WORD GetColour(uint8_t attr)
@@ -239,7 +239,7 @@ private:
 	}
 
 	HANDLE
-		stdout_;
+		console_;
 
 	static WORD
 		default_;
@@ -285,7 +285,7 @@ private:
 	{
 		DWORD
 			ret = 0;
-		WriteConsoleW(stdout_, &c, (DWORD)len, &ret, NULL);
+		WriteConsoleW(console_, &c, (DWORD)len, &ret, NULL);
 		return (int_type)ret;
 	}
 
@@ -311,7 +311,7 @@ private:
 		}
 		DWORD
 			ret = 0;
-		WriteConsoleW(stdout_, out, (DWORD)required, &ret, NULL);
+		WriteConsoleW(console_, out, (DWORD)required, &ret, NULL);
 		delete[] out;
 		return (int_type)ret;
 	}
@@ -330,7 +330,7 @@ public:
 	:
 		buffer_(underlying),
 		coloured_(coloured),
-		stdout_(GetStdHandle(STD_OUTPUT_HANDLE)),
+		console_(GetStdHandle(E ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
 		src_(nullptr),
 		attr0_(0),
 		attr1_(0),
@@ -341,7 +341,7 @@ public:
 		{
 			CONSOLE_SCREEN_BUFFER_INFO
 				info;
-			GetConsoleScreenBufferInfo(stdout_, &info);
+			GetConsoleScreenBufferInfo(console_, &info);
 			default_ = info.wAttributes;
 			first_ = true;
 		}
@@ -352,7 +352,7 @@ public:
 	:
 		buffer_(*src.rdbuf()),
 		coloured_(coloured),
-		stdout_(GetStdHandle(STD_OUTPUT_HANDLE)),
+		console_(GetStdHandle(E ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
 		src_(&src),
 		attr0_(0),
 		attr1_(0),
@@ -365,7 +365,7 @@ public:
 		{
 			CONSOLE_SCREEN_BUFFER_INFO
 				info;
-			GetConsoleScreenBufferInfo(stdout_, &info);
+			GetConsoleScreenBufferInfo(console_, &info);
 			default_ = info.wAttributes;
 			first_ = true;
 		}
@@ -376,7 +376,7 @@ public:
 	{
 		if (src_)
 			src_->rdbuf(&buffer_);
-		SetConsoleTextAttribute(stdout_, default_);
+		SetConsoleTextAttribute(console_, default_);
 	}
 #else
 	// cons
@@ -761,8 +761,10 @@ xsputn_loop_done:
 	#pragma warning(disable: 4661)
 #endif
 
-template class ColouredBuffer<char>;
-template class ColouredBuffer<wchar_t>;
+template class ColouredBuffer<char, true>;
+template class ColouredBuffer<wchar_t, true>;
+template class ColouredBuffer<char, false>;
+template class ColouredBuffer<wchar_t, false>;
 };
 
 #ifdef CONMD_WINDOWS
