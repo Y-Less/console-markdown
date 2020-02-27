@@ -525,7 +525,7 @@ WriteColoured_loop_done:
 			// Restore the correct colours.
 			Colour(stream);
 			int
-				wrote = OutputA(s, (int)(end - s), stream);
+				wrote = OutputA(s, (int)(esc - s), stream);
 			ret += wrote;
 			if (wrote != esc - s)
 			{
@@ -627,7 +627,7 @@ WriteColoured_loop_done:
 			// Restore the correct colours.
 			Colour(stream);
 			int
-				wrote = OutputW(s, (int)(end - s), stream);
+				wrote = OutputW(s, (int)(esc - s), stream);
 			ret += wrote;
 			if (wrote != esc - s)
 			{

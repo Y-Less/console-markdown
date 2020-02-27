@@ -40,10 +40,6 @@ enum STATE_E
 
 struct stream_s;
 
-//typedef int (* OutputC_t)(wchar_t c, struct stream_s * const stream);
-//typedef int (* OutputA_t)(char const * c, int len, struct stream_s * const stream);
-//typedef int (* OutputW_t)(wchar_t const * c, int len, struct stream_s * const stream);
-
 struct stream_s
 {
 	wchar_t
@@ -69,18 +65,6 @@ struct stream_s
 		Attr1,
 		Attr2,
 		Attr3;
-
-	//OutputC_t
-	//	OutputC;
-	//
-	//OutputA_t
-	//	OutputA;
-	//
-	//OutputW_t
-	//	OutputW;
-	//
-	//void *
-	//	Data;
 };
 
 #else

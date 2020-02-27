@@ -5,64 +5,11 @@
 
 using namespace cmdmd::Literals;
 
-//typedef
-//    WINBASEAPI
-//    BOOL
-//    (WINAPI * WriteConsolePtr)(
-//        _In_ HANDLE hConsoleOutput,
-//        _In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
-//        _In_ DWORD nNumberOfCharsToWrite,
-//        _Out_opt_ LPDWORD lpNumberOfCharsWritten,
-//        _Reserved_ LPVOID lpReserved
-//    );
-//
-//WriteConsolePtr
-//    WriteConsoleA_;
-
-//subhook_t
-//    WriteConsoleA_;
-//
-//BOOL
-//WINAPI
-//Hook_WriteConsoleA(
-//    _In_ HANDLE hConsoleOutput,
-//    _In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
-//    _In_ DWORD nNumberOfCharsToWrite,
-//    _Out_opt_ LPDWORD lpNumberOfCharsWritten,
-//    _Reserved_ LPVOID lpReserved
-//)
-//{
-//    subhook_remove(WriteConsoleA_);
-//    WriteConsoleA(hConsoleOutput, "Hello ", 6, NULL, NULL);
-//    BOOL ret = WriteConsoleA(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-//    subhook_install(WriteConsoleA_);
-//    return ret;
-//}
-
 int main()
 {
-//    //WriteConsoleA_ = &WriteConsoleA;
-//    WriteConsoleA_ = subhook_new((void*)&WriteConsoleA, (void*)&Hook_WriteConsoleA, SUBHOOK_64BIT_OFFSET);
-//
-//    subhook_install(WriteConsoleA_);
-//
-//    HANDLE
-//        stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-//
-//    WriteConsoleA(stdOut, "World\n", 6, NULL, NULL);
-//
-//    printf("Alex\n");
-//
-//    std::cout << "C++" << std::endl;
-//
-//    subhook_remove(WriteConsoleA_);
-//    subhook_free(WriteConsoleA_);
-//
-//    return 0;
-
 	cmdmd::Init();
 
-	std::cout << R"(
+	std::string output = R"(
 ____
   
 # Heading 1
@@ -143,6 +90,8 @@ I hope you are OK, like `someCode()` is.
 3. One1
   
 )"_cmdmd;
+
+    WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), output.c_str(), output.length(), NULL, NULL);
 
 	return 0;
 }
