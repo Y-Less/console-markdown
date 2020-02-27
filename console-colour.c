@@ -126,7 +126,7 @@ void Backout(struct stream_s * const stream)
 	if (backout[0])
 	{
 		Colour(stream);
-		OutputA(backout, strlen(backout), stream);
+		OutputA(backout, (int)strlen(backout), stream);
 	}
 	stream->State = STATE_NONE;
 	stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = 0;
@@ -466,7 +466,7 @@ int WriteColouredA(char const * s, int n, struct stream_s* const stream)
 		* start = s,
 		* end = s + n;
 	// Just in case.
-	if (n == 0 || s == nullptr)
+	if (n == 0 || s == NULL)
 	{
 		subhook_install(WriteConsoleW_);
 		subhook_install(WriteConsoleA_);
@@ -515,7 +515,7 @@ WriteColoured_loop_done:
 		else
 		{
 			esc = strchr(s, '\x1B');
-			if (esc == nullptr)
+			if (esc == NULL)
 				break;
 			stream->State = STATE_ESC;
 		}
@@ -525,13 +525,13 @@ WriteColoured_loop_done:
 			// Restore the correct colours.
 			Colour(stream);
 			int
-				wrote = OutputA(s, esc - s, stream);
+				wrote = OutputA(s, (int)(end - s), stream);
 			ret += wrote;
 			if (wrote != esc - s)
 			{
 				subhook_install(WriteConsoleW_);
 				subhook_install(WriteConsoleA_);
-				return s - start + wrote;
+				return (int)(s - start + wrote);
 			}
 		}
 		s = esc + 1;
@@ -553,10 +553,10 @@ WriteColoured_loop_done:
 	// Restore the correct colours.
 	Colour(stream);
 	int
-		wrote = OutputA(s, end - s, stream);
+		wrote = OutputA(s, (int)(end - s), stream);
 	subhook_install(WriteConsoleW_);
 	subhook_install(WriteConsoleA_);
-	return s - start + wrote;
+	return (int)(s - start + wrote);
 }
 
 int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
@@ -568,7 +568,7 @@ int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
 		* start = s,
 		* end = s + n;
 	// Just in case.
-	if (n == 0 || s == nullptr)
+	if (n == 0 || s == NULL)
 	{
 		subhook_install(WriteConsoleW_);
 		subhook_install(WriteConsoleA_);
@@ -617,7 +617,7 @@ WriteColoured_loop_done:
 		else
 		{
 			esc = wcschr(s, '\x1B');
-			if (esc == nullptr)
+			if (esc == NULL)
 				break;
 			stream->State = STATE_ESC;
 		}
@@ -627,13 +627,13 @@ WriteColoured_loop_done:
 			// Restore the correct colours.
 			Colour(stream);
 			int
-				wrote = OutputW(s, esc - s, stream);
+				wrote = OutputW(s, (int)(end - s), stream);
 			ret += wrote;
 			if (wrote != esc - s)
 			{
 				subhook_install(WriteConsoleW_);
 				subhook_install(WriteConsoleA_);
-				return s - start + wrote;
+				return (int)(s - start + wrote);
 			}
 		}
 		s = esc + 1;
@@ -655,10 +655,10 @@ WriteColoured_loop_done:
 	// Restore the correct colours.
 	Colour(stream);
 	int
-		wrote = OutputW(s, end - s, stream);
+		wrote = OutputW(s, (int)(end - s), stream);
 	subhook_install(WriteConsoleW_);
 	subhook_install(WriteConsoleA_);
-	return s - start + wrote;
+	return (int)(s - start + wrote);
 }
 
 BOOL
@@ -746,8 +746,8 @@ void InitStreamHooks()
 
 void DeinitStreamHooks()
 {
-	::SetConsoleTextAttribute(gCOut.Handle, gCOut.DefaultStyle);
-	::SetConsoleTextAttribute(gCErr.Handle, gCErr.DefaultStyle);
+	SetConsoleTextAttribute(gCOut.Handle, gCOut.DefaultStyle);
+	SetConsoleTextAttribute(gCErr.Handle, gCErr.DefaultStyle);
 	if (WriteConsoleA_)
 	{
 		subhook_remove(WriteConsoleA_);

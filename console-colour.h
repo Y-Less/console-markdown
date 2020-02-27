@@ -13,6 +13,7 @@ extern "C"
 #ifdef CONMD_WINDOWS
 
 #include <Windows.h>
+#include <stdbool.h>
 
 enum STATE_E
 {

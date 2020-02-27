@@ -163,9 +163,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ColouredBuffer.hpp" />
+    <ClInclude Include="console-colour.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ColouredBuffer.cpp" />
+    <ClCompile Include="console-colour.c" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="subhook\subhook.c" />
   </ItemGroup>
