@@ -295,7 +295,11 @@ public:
 		buffer_(underlying),
 		coloured_(coloured),
 		stdout_(GetStdHandle(STD_OUTPUT_HANDLE)),
-		src_(nullptr)
+		src_(nullptr),
+		attr0_(0),
+		attr1_(0),
+		attr2_(0),
+		attr3_(0)
 	{
 		if (!first_)
 		{
@@ -313,7 +317,11 @@ public:
 		buffer_(*src.rdbuf()),
 		coloured_(coloured),
 		stdout_(GetStdHandle(STD_OUTPUT_HANDLE)),
-		src_(&src)
+		src_(&src),
+		attr0_(0),
+		attr1_(0),
+		attr2_(0),
+		attr3_(0)
 	{
 		// Insert ourselves.
 		src.rdbuf(this);
