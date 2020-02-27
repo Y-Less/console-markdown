@@ -241,11 +241,8 @@ private:
 	HANDLE
 		console_;
 
-	static WORD
+	WORD
 		default_;
-
-	static bool
-		first_;
 
 	WORD
 		colour_;
@@ -322,14 +319,10 @@ public:
 		attr2_(0),
 		attr3_(0)
 	{
-		if (!first_)
-		{
-			CONSOLE_SCREEN_BUFFER_INFO
-				info;
-			GetConsoleScreenBufferInfo(console_, &info);
-			default_ = info.wAttributes;
-			first_ = true;
-		}
+		CONSOLE_SCREEN_BUFFER_INFO
+			info;
+		GetConsoleScreenBufferInfo(console_, &info);
+		default_ = info.wAttributes;
 		colour_ = default_;
 	}
 
@@ -346,14 +339,10 @@ public:
 	{
 		// Insert ourselves.
 		src.rdbuf(this);
-		if (!first_)
-		{
-			CONSOLE_SCREEN_BUFFER_INFO
-				info;
-			GetConsoleScreenBufferInfo(console_, &info);
-			default_ = info.wAttributes;
-			first_ = true;
-		}
+		CONSOLE_SCREEN_BUFFER_INFO
+			info;
+		GetConsoleScreenBufferInfo(console_, &info);
+		default_ = info.wAttributes;
 		colour_ = default_;
 	}
 

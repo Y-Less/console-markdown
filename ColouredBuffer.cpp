@@ -2,24 +2,6 @@
 
 using namespace cmdmd;
 
-#ifdef CONMD_WINDOWS
-	bool
-		ColouredBuffer<char>::
-		first_;
-
-	WORD
-		ColouredBuffer<char>::
-		default_;
-
-	bool
-		ColouredBuffer<wchar_t>::
-		first_;
-
-	WORD
-		ColouredBuffer<wchar_t>::
-		default_;
-#endif
-
 template <>
 void
 	ColouredBuffer<char>::
