@@ -671,6 +671,14 @@ Hook_WriteConsoleA(
 	_Reserved_ LPVOID lpReserved
 )
 {
+	if (nNumberOfCharsToWrite == 0)
+	{
+		if (lpNumberOfCharsWritten)
+		{
+			*lpNumberOfCharsWritten = 0;
+		}
+		return TRUE;
+	}
 	int num = 0;
 	if (hConsoleOutput == gCOut.Handle)
 	{
@@ -697,6 +705,14 @@ Hook_WriteConsoleW(
 	_Reserved_ LPVOID lpReserved
 )
 {
+	if (nNumberOfCharsToWrite == 0)
+	{
+		if (lpNumberOfCharsWritten)
+		{
+			*lpNumberOfCharsWritten = 0;
+		}
+		return TRUE;
+	}
 	int num = 0;
 	if (hConsoleOutput == gCOut.Handle)
 	{
