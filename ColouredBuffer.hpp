@@ -285,35 +285,17 @@ private:
 	{
 		DWORD
 			ret = 0;
-		WriteConsoleW(console_, &c, (DWORD)len, &ret, NULL);
-		return (int_type)ret;
+		WriteConsoleW(console_, c, (DWORD)len, &ret, NULL);
+		return (size_type)ret;
 	}
 
 	template <>
 	size_type DoWriteConsole<char>(char const * c, size_type len)
 	{
-		if (len == 0)
-		{
-			return 0;
-		}
-		size_type
-			required = MultiByteToWideChar(CP_UTF8, 0, c, (int)len, NULL, 0);
-		if (!required)
-		{
-			return 0;
-		}
-		wchar_t *
-			out = new wchar_t[required];
-		if (!MultiByteToWideChar(CP_UTF8, 0, c, (int)len, out, (int)required))
-		{
-			delete [] out;
-			return 0;
-		}
 		DWORD
 			ret = 0;
-		WriteConsoleW(console_, out, (DWORD)required, &ret, NULL);
-		delete[] out;
-		return (int_type)ret;
+		WriteConsoleA(console_, c, (DWORD)len, &ret, NULL);
+		return (size_type)ret;
 	}
 #endif
 
