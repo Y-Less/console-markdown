@@ -11,47 +11,64 @@
     #define CONSOLECOLOUR_API __declspec(dllimport)
 #endif
 
-#define BUFSIZE 1024
+cmdmd::ColouredBuffer<wchar_t>
+    * WCOUT,
+    * WCERR;
 
-void OpenTemp()
-{
-    CHAR szTempFileName[MAX_PATH];
-    CHAR lpTempPathBuffer[MAX_PATH];
-    //char  chBuffer[BUFSIZE];
-    
-    DWORD dwRetVal = GetTempPathA(MAX_PATH, lpTempPathBuffer); // buffer for path 
-    if (dwRetVal > MAX_PATH || (dwRetVal == 0))
-    {
-        return;// NULL;
-    }
+cmdmd::ColouredBuffer<char>
+    * COUT,
+    * CERR;
 
-    UINT uRetVal = GetTempFileNameA(lpTempPathBuffer, "stdout", 0, szTempFileName);
-    if (uRetVal == 0)
-    {
-        return;// NULL;
-    }
-
-    freopen(szTempFileName, "w", stdout);
-}
-
-//#pragma comment(linker, "/EXPORT:ColouriseStdOut=_ColouriseStdOut@0")
 extern "C" CONSOLECOLOUR_API int ColouriseStdOut(void)
 {
-    OpenTemp();
-//    new cmdmd::ColouredBuffer<char>(std::cout, true);
-//    new cmdmd::ColouredBuffer<wchar_t>(std::wcout, true);
+    if (!COUT)
+    {
+        COUT = new cmdmd::ColouredBuffer<char>(std::cout, true);
+    }
+    if (!WCOUT)
+    {
+        WCOUT = new cmdmd::ColouredBuffer<wchar_t>(std::wcout, true);
+    }
     return 0;
 }
 
-//#pragma comment(linker, "/EXPORT:ColouriseStdErr=_ColouriseStdErr@0")
 extern "C" CONSOLECOLOUR_API int ColouriseStdErr(void)
 {
-    new cmdmd::ColouredBuffer<char>(std::cerr, true);
-    new cmdmd::ColouredBuffer<wchar_t>(std::wcerr, true);
+    if (!CERR)
+    {
+        CERR = new cmdmd::ColouredBuffer<char>(std::cerr, true);
+    }
+    if (!WCERR)
+    {
+        WCERR = new cmdmd::ColouredBuffer<wchar_t>(std::wcerr, true);
+    }
     return 0;
 }
 
-//#pragma comment(linker, "/EXPORT:ColouriseStdOutAndStdErr=_ColouriseStdOutAndStdErr@0")
+extern "C" CONSOLECOLOUR_API void StdOut(LPCTSTR line)
+{
+    printf("line");
+    //std::wcout << (wchar_t)line;
+}
+
+extern "C" CONSOLECOLOUR_API void StdErr(LPCTSTR line)
+{
+    printf("err");
+    //std::wcerr << (wchar_t)line;
+}
+
+extern "C" CONSOLECOLOUR_API void FlushOut(void)
+{
+    std::cout.flush();
+    std::wcout.flush();
+}
+
+extern "C" CONSOLECOLOUR_API void FlushErr(void)
+{
+    std::cerr.flush();
+    std::wcerr.flush();
+}
+
 extern "C" CONSOLECOLOUR_API int ColouriseStdOutAndStdErr(void)
 {
     if (ColouriseStdOut() || ColouriseStdErr())
