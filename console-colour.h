@@ -78,13 +78,24 @@ struct stream_s
 	//	Data;
 };
 
+#else
+
+// Empty, just to exist.
+struct stream_s
+{
+};
+
+#endif
+
 extern struct stream_s
 	gCOut,
 	gCErr;
 
-#endif
-
 void InitStreamHooks();
+void DeinitStreamHooks();
+int WriteColouredW(wchar_t const* s, int n, struct stream_s* const stream);
+int WriteColouredA(char const* s, int n, struct stream_s* const stream);
+void Backout(struct stream_s* const stream);
 
 #ifdef __cplusplus
 }

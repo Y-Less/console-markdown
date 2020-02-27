@@ -72,7 +72,7 @@ static void Colour(struct stream_s * const stream)
 	}
 }
 
-static void Backout(struct stream_s * const stream)
+void Backout(struct stream_s * const stream)
 {
 	// Back out of the buffering.
 	char backout[12] = "";
@@ -696,6 +696,24 @@ void InitStreamHooks()
 	if (WriteConsoleW_)
 	{
 		subhook_install(WriteConsoleW_);
+	}
+}
+
+void DeinitStreamHooks()
+{
+	::SetConsoleTextAttribute(gCOut.Handle, gCOut.DefaultStyle);
+	::SetConsoleTextAttribute(gCErr.Handle, gCErr.DefaultStyle);
+	if (WriteConsoleA_)
+	{
+		subhook_remove(WriteConsoleA_);
+		subhook_free(WriteConsoleA_);
+		WriteConsoleA_ = 0;
+	}
+	if (WriteConsoleW_)
+	{
+		subhook_remove(WriteConsoleW_);
+		subhook_free(WriteConsoleW_);
+		WriteConsoleW_ = 0;
 	}
 }
 
