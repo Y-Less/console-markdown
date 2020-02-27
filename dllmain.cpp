@@ -11,27 +11,23 @@
     #define CONSOLECOLOUR_API __declspec(dllimport)
 #endif
 
-cmdmd::ColouredBuffer<wchar_t, false>
-    * WCOUT;
-
-cmdmd::ColouredBuffer<wchar_t, true>
+cmdmd::ColouredBuffer<wchar_t>
+    * WCOUT,
     * WCERR;
 
-cmdmd::ColouredBuffer<char, false>
-    * COUT;
-
-cmdmd::ColouredBuffer<char, true>
+cmdmd::ColouredBuffer<char>
+    * COUT,
     * CERR;
 
 extern "C" CONSOLECOLOUR_API int ColouriseStdOut(void)
 {
     if (!COUT)
     {
-        COUT = new cmdmd::ColouredBuffer<char, false>(std::cout, true);
+        COUT = new cmdmd::ColouredBuffer<char>(std::cout, true, false);
     }
     if (!WCOUT)
     {
-        WCOUT = new cmdmd::ColouredBuffer<wchar_t, false>(std::wcout, true);
+        WCOUT = new cmdmd::ColouredBuffer<wchar_t>(std::wcout, true, false);
     }
     return 0;
 }
@@ -40,11 +36,11 @@ extern "C" CONSOLECOLOUR_API int ColouriseStdErr(void)
 {
     if (!CERR)
     {
-        CERR = new cmdmd::ColouredBuffer<char, true>(std::cerr, true);
+        CERR = new cmdmd::ColouredBuffer<char>(std::cerr, true, true);
     }
     if (!WCERR)
     {
-        WCERR = new cmdmd::ColouredBuffer<wchar_t, true>(std::wcerr, true);
+        WCERR = new cmdmd::ColouredBuffer<wchar_t>(std::wcerr, true, true);
     }
     return 0;
 }

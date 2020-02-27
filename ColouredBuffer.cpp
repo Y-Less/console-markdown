@@ -4,86 +4,52 @@ using namespace cmdmd;
 
 #ifdef CONMD_WINDOWS
 	bool
-		ColouredBuffer<char, true>::
+		ColouredBuffer<char>::
 		first_;
 
 	WORD
-		ColouredBuffer<char, true>::
+		ColouredBuffer<char>::
 		default_;
 
 	bool
-		ColouredBuffer<wchar_t, true>::
+		ColouredBuffer<wchar_t>::
 		first_;
 
 	WORD
-		ColouredBuffer<wchar_t, true>::
-		default_;
-
-	bool
-		ColouredBuffer<char, false>::
-		first_;
-
-	WORD
-		ColouredBuffer<char, false>::
-		default_;
-
-	bool
-		ColouredBuffer<wchar_t, false>::
-		first_;
-
-	WORD
-		ColouredBuffer<wchar_t, false>::
+		ColouredBuffer<wchar_t>::
 		default_;
 #endif
 
 template <>
 void
-	ColouredBuffer<char, true>::
+	ColouredBuffer<char>::
 	StandardInstall()
 {
 #ifdef CONMD_WINDOWS
 	// Redirect `stderr` via us.
-	new ColouredBuffer<char, true>(std::cerr, true);
+	new ColouredBuffer<char>(std::cerr, true, true);
+	// Redirect `stdout` via us.
+	new ColouredBuffer<char>(std::cout, true, false);
 #endif
 }
 
 template <>
 void
-	ColouredBuffer<wchar_t, true>::
+	ColouredBuffer<wchar_t>::
 	StandardInstall()
 {
 #ifdef CONMD_WINDOWS
 	// Redirect `stderr` via us.
-	new ColouredBuffer<wchar_t, true>(std::wcerr, true);
-#endif
-}
-
-template <>
-void
-	ColouredBuffer<char, false>::
-	StandardInstall()
-{
-#ifdef CONMD_WINDOWS
+	new ColouredBuffer<wchar_t>(std::wcerr, true, true);
 	// Redirect `stdout` via us.
-	new ColouredBuffer<char, false>(std::cout, true);
-#endif
-}
-
-template <>
-void
-	ColouredBuffer<wchar_t, false>::
-	StandardInstall()
-{
-#ifdef CONMD_WINDOWS
-	// Redirect `stdout` via us.
-	new ColouredBuffer<wchar_t, false>(std::wcout, true);
+	new ColouredBuffer<wchar_t>(std::wcout, true, false);
 #endif
 }
 
 #ifdef CONMD_WINDOWS
 template <>
 char const *
-	ColouredBuffer<char, true>::
+	ColouredBuffer<char>::
 	wstrchr(char const * s, char const n)
 {
 	return strchr(s, n);
@@ -91,7 +57,7 @@ char const *
 
 template <>
 wchar_t const *
-	ColouredBuffer<wchar_t, true>::
+	ColouredBuffer<wchar_t>::
 	wstrchr(wchar_t const * s, wchar_t const n)
 {
 	return wcschr(s, n);
@@ -99,7 +65,7 @@ wchar_t const *
 
 template <>
 std::streamsize
-	ColouredBuffer<char, true>::
+	ColouredBuffer<char>::
 	wstrout(char const * s)
 {
 	return buffer_.sputn(s, strlen(s));
@@ -107,42 +73,7 @@ std::streamsize
 
 template <>
 std::streamsize
-	ColouredBuffer<wchar_t, true>::
-	wstrout(char const * s)
-{
-	wchar_t w[12];
-	size_t conv;
-	mbstowcs_s(&conv, w, 12, s, 12);
-	return buffer_.sputn(w, wcslen(w));
-}
-
-template <>
-char const *
-	ColouredBuffer<char, false>::
-	wstrchr(char const * s, char const n)
-{
-	return strchr(s, n);
-}
-
-template <>
-wchar_t const *
-	ColouredBuffer<wchar_t, false>::
-	wstrchr(wchar_t const * s, wchar_t const n)
-{
-	return wcschr(s, n);
-}
-
-template <>
-std::streamsize
-	ColouredBuffer<char, false>::
-	wstrout(char const * s)
-{
-	return buffer_.sputn(s, strlen(s));
-}
-
-template <>
-std::streamsize
-	ColouredBuffer<wchar_t, false>::
+	ColouredBuffer<wchar_t>::
 	wstrout(char const * s)
 {
 	wchar_t w[12];

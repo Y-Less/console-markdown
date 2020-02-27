@@ -512,10 +512,8 @@ std::string cmdmd::Render(char const * input, size_t len)
 
 void cmdmd::Init()
 {
-	ColouredBuffer<char, true>::StandardInstall();
-	ColouredBuffer<wchar_t, true>::StandardInstall();
-	ColouredBuffer<char, false>::StandardInstall();
-	ColouredBuffer<wchar_t, false>::StandardInstall();
+	ColouredBuffer<char>::StandardInstall();
+	ColouredBuffer<wchar_t>::StandardInstall();
 }
 
 std::string

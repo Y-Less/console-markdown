@@ -13,7 +13,7 @@
 
 namespace cmdmd
 {
-template <class C, bool E, class T = std::char_traits<C>, class A = std::allocator<C>>
+template <class C, class T = std::char_traits<C>, class A = std::allocator<C>>
 class ColouredBuffer : public std::basic_stringbuf<C, T, A>
 {
 public:
@@ -311,11 +311,11 @@ private:
 public:
 
 #ifdef CONMD_WINDOWS
-	ColouredBuffer(streambuf_type & underlying, bool coloured = false)
+	ColouredBuffer(streambuf_type & underlying, bool coloured, bool err)
 	:
 		buffer_(underlying),
 		coloured_(coloured),
-		console_(GetStdHandle(E ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
+		console_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
 		src_(nullptr),
 		attr0_(0),
 		attr1_(0),
@@ -333,11 +333,11 @@ public:
 		colour_ = default_;
 	}
 
-	ColouredBuffer(ostream_type & src, bool coloured = false)
+	ColouredBuffer(ostream_type & src, bool coloured, bool err)
 	:
 		buffer_(*src.rdbuf()),
 		coloured_(coloured),
-		console_(GetStdHandle(E ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
+		console_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
 		src_(&src),
 		attr0_(0),
 		attr1_(0),
@@ -365,14 +365,14 @@ public:
 	}
 #else
 	// cons
-	ColouredBuffer(streambuf_type & underlying, bool coloured)
+	ColouredBuffer(streambuf_type & underlying, bool coloured, bool err)
 	:
 		buffer_(underlying)
 	{
 	}
 
 	// cons
-	ColouredBuffer(ostream_type & src, bool coloured)
+	ColouredBuffer(ostream_type & src, bool coloured, bool err)
 	:
 		buffer_(*src.rdbuf())
 	{
@@ -746,10 +746,10 @@ xsputn_loop_done:
 	#pragma warning(disable: 4661)
 #endif
 
-template class ColouredBuffer<char, true>;
-template class ColouredBuffer<wchar_t, true>;
-template class ColouredBuffer<char, false>;
-template class ColouredBuffer<wchar_t, false>;
+template class ColouredBuffer<char>;
+template class ColouredBuffer<wchar_t>;
+template class ColouredBuffer<char>;
+template class ColouredBuffer<wchar_t>;
 };
 
 #ifdef CONMD_WINDOWS
