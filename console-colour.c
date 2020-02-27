@@ -27,32 +27,9 @@ static int OutputW(wchar_t const * c, int len, struct stream_s * const stream)
 }
 
 struct stream_s
-	//gWOut = {
-	//	0x8000,
-	//	STATE_NONE,
-	//	true,
-	//	true,
-	//	false,
-	//},
-	//gWErr = {
-	//	0x8000,
-	//	STATE_NONE,
-	//	true,
-	//	true,
-	//	true,
-	//},
-	gCOut = {
+	gStream = {
 		0x80,
 		STATE_NONE,
-	//	false,
-		true,
-		false,
-	},
-	gCErr = {
-		0x80,
-		STATE_NONE,
-	//	false,
-		true,
 		true,
 	};
 
@@ -75,7 +52,7 @@ static void Colour(struct stream_s * const stream)
 void Backout(struct stream_s * const stream)
 {
 	// Back out of the buffering.
-	char backout[12] = "";
+	char backout[32] = "";
 	// Run the state machine.
 	switch (stream->State)
 	{
@@ -84,43 +61,31 @@ void Backout(struct stream_s * const stream)
 	case STATE_NONE:
 		return;
 	case STATE_ESC:
-		sprintf_s(backout, 12, "\x1B");
+		sprintf_s(backout, sizeof (backout), "\x1B");
 		break;
 	case STATE_START:
-		sprintf_s(backout, 12, "\x1B[");
+		sprintf_s(backout, sizeof (backout), "\x1B[");
 		break;
 	case STATE_A00:
-		sprintf_s(backout, 12, "\x1B[%d", stream->Attr0);
-		break;
-	case STATE_A01:
-		sprintf_s(backout, 12, "\x1B[%d", stream->Attr0);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d", stream->Attr0);
 		break;
 	case STATE_S0:
-		sprintf_s(backout, 12, "\x1B[%d;", stream->Attr0);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;", stream->Attr0);
 		break;
 	case STATE_A10:
-		sprintf_s(backout, 12, "\x1B[%d;%d", stream->Attr0, stream->Attr1);
-		break;
-	case STATE_A11:
-		sprintf_s(backout, 12, "\x1B[%d;%d", stream->Attr0, stream->Attr1);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d", stream->Attr0, stream->Attr1);
 		break;
 	case STATE_S1:
-		sprintf_s(backout, 12, "\x1B[%d;%d;", stream->Attr0, stream->Attr1);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;", stream->Attr0, stream->Attr1);
 		break;
 	case STATE_A20:
-		sprintf_s(backout, 12, "\x1B[%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2);
-		break;
-	case STATE_A21:
-		sprintf_s(backout, 12, "\x1B[%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2);
 		break;
 	case STATE_S2:
-		sprintf_s(backout, 12, "\x1B[%d;%d;%d;", stream->Attr0, stream->Attr1, stream->Attr2);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;", stream->Attr0, stream->Attr1, stream->Attr2);
 		break;
 	case STATE_A30:
-		sprintf_s(backout, 12, "\x1B[%d;%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3);
-		break;
-	case STATE_A31:
-		sprintf_s(backout, 12, "\x1B[%d;%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3);
 		break;
 	}
 	if (backout[0])
@@ -270,23 +235,8 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		if ('0' <= c && c <= '9')
 		{
 			stream->Attr0 = stream->Attr0 * 10 + (unsigned char)(c - '0');
-			stream->State = STATE_A01;
 		}
 		else if (c == ';')
-			stream->State = STATE_S0;
-		else if (c == 'm')
-		{
-			stream->State = STATE_DONE;
-			break;
-		}
-		else
-		{
-			Backout(stream);
-			break;
-		}
-		return 0;
-	case STATE_A01:
-		if (c == ';')
 			stream->State = STATE_S0;
 		else if (c == 'm')
 		{
@@ -320,23 +270,8 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		if ('0' <= c && c <= '9')
 		{
 			stream->Attr1 = stream->Attr1 * 10 + (unsigned char)(c - '0');
-			stream->State = STATE_A11;
 		}
 		else if (c == ';')
-			stream->State = STATE_S1;
-		else if (c == 'm')
-		{
-			stream->State = STATE_DONE;
-			break;
-		}
-		else
-		{
-			Backout(stream);
-			break;
-		}
-		return 0;
-	case STATE_A11:
-		if (c == ';')
 			stream->State = STATE_S1;
 		else if (c == 'm')
 		{
@@ -370,23 +305,8 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		if ('0' <= c && c <= '9')
 		{
 			stream->Attr2 = stream->Attr2 * 10 + (unsigned char)(c - '0');
-			stream->State = STATE_A21;
 		}
 		else if (c == ';')
-			stream->State = STATE_S2;
-		else if (c == 'm')
-		{
-			stream->State = STATE_DONE;
-			break;
-		}
-		else
-		{
-			Backout(stream);
-			break;
-		}
-		return 0;
-	case STATE_A21:
-		if (c == ';')
 			stream->State = STATE_S2;
 		else if (c == 'm')
 		{
@@ -420,7 +340,6 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		if ('0' <= c && c <= '9')
 		{
 			stream->Attr3 = stream->Attr3 * 10 + (unsigned char)(c - '0');
-			stream->State = STATE_A31;
 		}
 		else if (c == 'm')
 		{
@@ -433,18 +352,6 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 			break;
 		}
 		return 0;
-	case STATE_A31:
-		if (c == 'm')
-		{
-			stream->State = STATE_DONE;
-			break;
-		}
-		else
-		{
-			Backout(stream);
-			break;
-		}
-		break;
 	}
 	if (stream->State == STATE_DONE)
 	{
@@ -679,20 +586,19 @@ Hook_WriteConsoleA(
 		}
 		return TRUE;
 	}
-	int num = 0;
-	if (hConsoleOutput == gCOut.Handle)
-	{
-		num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gCOut);
-	}
-	if (hConsoleOutput == gCErr.Handle)
-	{
-		num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gCErr);
-	}
+	gStream.Handle = hConsoleOutput;
+	int
+		num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gStream);
 	if (lpNumberOfCharsWritten)
 	{
-		*lpNumberOfCharsWritten = num;
+		*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
 	}
-	return num != 0;
+	return TRUE;
+	//if (lpNumberOfCharsWritten)
+	//{
+	//	*lpNumberOfCharsWritten = num;
+	//}
+	//return num != 0;
 }
 
 BOOL
@@ -713,34 +619,30 @@ Hook_WriteConsoleW(
 		}
 		return TRUE;
 	}
-	int num = 0;
-	if (hConsoleOutput == gCOut.Handle)
-	{
-		num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gCOut);
-	}
-	if (hConsoleOutput == gCErr.Handle)
-	{
-		num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gCErr);
-	}
+	gStream.Handle = hConsoleOutput;
+	int
+		num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gStream);
 	if (lpNumberOfCharsWritten)
 	{
-		*lpNumberOfCharsWritten = num;
+		*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
 	}
-	return num != 0;
+	return TRUE;
+	//if (lpNumberOfCharsWritten)
+	//{
+	//	*lpNumberOfCharsWritten = num;
+	//}
+	//return num != 0;
 }
 
 void InitStreamHooks()
 {
 	CONSOLE_SCREEN_BUFFER_INFO
 		info;
-	gCOut.Handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	gCErr.Handle = GetStdHandle(STD_ERROR_HANDLE);
+	HANDLE
+		handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	GetConsoleScreenBufferInfo(gCErr.Handle, &info);
-	gCErr.CurrentStyle = gCErr.DefaultStyle = info.wAttributes;
-
-	GetConsoleScreenBufferInfo(gCOut.Handle, &info);
-	gCOut.CurrentStyle = gCOut.DefaultStyle = info.wAttributes;
+	GetConsoleScreenBufferInfo(handle, &info);
+	gStream.CurrentStyle = gStream.DefaultStyle = info.wAttributes;
 
 	if (!WriteConsoleA_)
 	{
@@ -762,8 +664,9 @@ void InitStreamHooks()
 
 void DeinitStreamHooks()
 {
-	SetConsoleTextAttribute(gCOut.Handle, gCOut.DefaultStyle);
-	SetConsoleTextAttribute(gCErr.Handle, gCErr.DefaultStyle);
+	HANDLE
+		handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(handle, gStream.DefaultStyle);
 	if (WriteConsoleA_)
 	{
 		subhook_remove(WriteConsoleA_);

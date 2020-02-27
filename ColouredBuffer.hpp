@@ -64,8 +64,8 @@ private:
 	ostream_type*
 		src_;
 
-	struct stream_s* const
-		stream_;
+	HANDLE
+		handle_;
 
 	template <typename C2>
 	size_type WriteColouredX(C2 const * data, size_type len);
@@ -73,20 +73,22 @@ private:
 	template <>
 	size_type WriteColouredX<char>(char const * data, size_type len)
 	{
-		bool tmp = stream_->Coloured;
-		stream_->Coloured = coloured_;
-		auto ret = ::WriteColouredA(data, (int)len, stream_);
-		stream_->Coloured = tmp;
+		bool tmp = gStream.Coloured;
+		gStream.Coloured = coloured_;
+		gStream.Handle = handle_;
+		auto ret = ::WriteColouredA(data, (int)len, &gStream);
+		gStream.Coloured = tmp;
 		return ret;
 	}
 
 	template <>
 	size_type WriteColouredX<wchar_t>(wchar_t const * data, size_type len)
 	{
-		bool tmp = stream_->Coloured;
-		stream_->Coloured = coloured_;
-		auto ret = ::WriteColouredW(data, (int)len, stream_);
-		stream_->Coloured = tmp;
+		bool tmp = gStream.Coloured;
+		gStream.Coloured = coloured_;
+		gStream.Handle = handle_;
+		auto ret = ::WriteColouredW(data, (int)len, &gStream);
+		gStream.Coloured = tmp;
 		return ret;
 	}
 
@@ -101,7 +103,7 @@ public:
 		buffer_(*src.rdbuf()),
 		coloured_(coloured),
 		src_(&src),
-		stream_(err ? &gCErr : &gCOut)
+		handle_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE))
 	{
 		src_->rdbuf(this);
 		InitStreamHooks();
@@ -155,7 +157,7 @@ protected:
 #ifdef CONMD_WINDOWS
 		// If they flush mid sequence there's not a lot we can do about it!  We can't keep buffering
 		// characters under the hood, even via a state machine, if they explicitly requested a flush.
-		::Backout(stream_);
+		::Backout(&gStream);
 		return 0;
 #else
 		return buffer_.pubsync();

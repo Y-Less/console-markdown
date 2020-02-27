@@ -21,16 +21,12 @@ enum STATE_E
 	STATE_ESC,         // Saw `\x1B`.
 	STATE_START,       // Saw `[`.
 	STATE_A00,         // Saw a number.
-	STATE_A01,         // Saw two numbers.
 	STATE_S0,          // Saw a semi-colon.
 	STATE_A10,         // Saw a number.
-	STATE_A11,         // Saw two numbers.
 	STATE_S1,          // Saw a semi-colon.
 	STATE_A20,         // Saw a number.
-	STATE_A21,         // Saw two numbers.
 	STATE_S2,          // Saw a semi-colon.
 	STATE_A30,         // Saw a number.
-	STATE_A31,         // Saw two numbers.
 	STATE_DONE,        // Complete.
 	STATE_EXTRA_NL,    // Insert one extra new line.
 	STATE_EXTRA_2NL,   // Insert two extra new lines.
@@ -49,9 +45,7 @@ struct stream_s
 		State;
 
 	bool
-		//	Wide,
-		Coloured,
-		Error;
+		Coloured;
 
 	HANDLE
 		Handle;
@@ -77,8 +71,7 @@ struct stream_s
 #endif
 
 extern struct stream_s
-	gCOut,
-	gCErr;
+	gStream;
 
 void InitStreamHooks();
 void DeinitStreamHooks();
