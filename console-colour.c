@@ -108,13 +108,142 @@ void Backout(struct stream_s * const stream)
 	stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = stream->Attr4 = 0;
 }
 
+static const WORD
+	FOREGROUND = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+	BACKGROUND = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+
+static WORD Make24Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
+{
+	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
+	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
+	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
+	// matters.
+	const int
+		CONSOLE_COLOURS[16][3] = {
+			{0, 0, 0},
+			{127, 0, 0},
+			{0, 127, 0},
+			{127, 127, 0},
+			{0, 0, 127},
+			{127, 0, 127},
+			{0, 127, 127},
+			{171, 171, 171},
+			{85, 85, 85},
+			{255, 0, 0},
+			{0, 255, 0},
+			{255, 255, 0},
+			{0, 0, 255},
+			{255, 0, 255},
+			{0, 255, 255},
+			{255, 255, 255},
+	};
+
+	int
+		dist = INT_MAX;
+	WORD
+		found = 0;
+	for (WORD i = 0; i != 16; ++i)
+	{
+		int
+			tr = r - CONSOLE_COLOURS[i][0],
+			tg = g - CONSOLE_COLOURS[i][1],
+			tb = b - CONSOLE_COLOURS[i][2],
+			cur = (tr * tr) + (tg * tg) + (tb * tb);
+		if (cur < dist)
+		{
+			dist = cur;
+			found = i;
+		}
+	}
+
+	return found;
+}
+
+static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
+{
+	// Greyscales.  Find the nearest.
+	if (attr >= 250)
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	else if (attr >= 244)
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+	else if (attr >= 238)
+		return FOREGROUND_INTENSITY;
+	else if (attr >= 232)
+		return 0;
+	else if (attr >= 16)
+	{
+		// 216 colours.  Extract the RGB from the colour.  Then scale them to 8-bit.
+		attr -= 16;
+		unsigned char
+			r = attr / 36;
+		attr -= r * 36;
+		unsigned char
+			g = attr / 6;
+		attr -= g * 6;
+		unsigned char
+			b = attr;
+		return Make24Colour((unsigned char)((float)r * 8.0f / 5.0f), (unsigned char)((float)r * 8.0f / 5.0f), (unsigned char)((float)r * 8.0f / 5.0f), stream);
+		return 0;
+	}
+	else switch (attr)
+	{
+	// Original colours.
+	case 0:
+		// Black.
+		return 0;
+	case 1:
+		// Red.
+		return FOREGROUND_RED;
+	case 2:
+		// Green.
+		return FOREGROUND_GREEN;
+	case 3:
+		// Yellow.
+		return FOREGROUND_RED | FOREGROUND_GREEN;
+	case 4:
+		// Blue.
+		return FOREGROUND_BLUE;
+	case 5:
+		// Magenta.
+		return FOREGROUND_RED | FOREGROUND_BLUE;
+	case 6:
+		// Cyan.
+		return FOREGROUND_GREEN | FOREGROUND_BLUE;
+	case 7:
+		// White.
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+	case 8 + 0:
+		// Black.
+		return FOREGROUND_INTENSITY;
+	case 8 + 1:
+		// Red.
+		return FOREGROUND_RED | FOREGROUND_INTENSITY;
+	case 8 + 2:
+		// Green.
+		return FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+	case 8 + 3:
+		// Yellow.
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+	case 8 + 4:
+		// Blue.
+		return FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	case 8 + 5:
+		// Magenta.
+		return FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	case 8 + 6:
+		// Cyan.
+		return FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	case 8 + 7:
+		// White.
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	}
+	return 0;
+}
+
 static WORD GetColour(unsigned char attr, struct stream_s* const stream)
 {
 	WORD
 		current = stream->CurrentStyle;
-	const WORD
-		FOREGROUND = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
-		BACKGROUND = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	switch (attr)
 	{
 	case 1:
@@ -254,9 +383,31 @@ static void GetColours(struct stream_s * const stream)
 	case 38:
 		// Special foreground colour.
 		// TODO: Find the closest working colour from the 16 available.
+		switch (stream->Attr1)
+		{
+		case 5:
+			// 256 colours.
+			stream->CurrentStyle = stream->CurrentStyle & ~FOREGROUND | Make256Colour(stream->Attr2, stream);
+			break;
+		case 2:
+			// 24-bit colours.
+			stream->CurrentStyle = stream->CurrentStyle & ~FOREGROUND | Make24Colour(stream->Attr2, stream->Attr3, stream->Attr4, stream);
+			break;
+		}
 		break;
 	case 48:
 		// Special background colour.
+		switch (stream->Attr1)
+		{
+		case 5:
+			// 256 colours.
+			stream->CurrentStyle = stream->CurrentStyle & ~BACKGROUND | Make256Colour(stream->Attr2, stream) << 4;
+			break;
+		case 2:
+			// 24-bit colours.
+			stream->CurrentStyle = stream->CurrentStyle & ~BACKGROUND | Make24Colour(stream->Attr2, stream->Attr3, stream->Attr4, stream) << 4;
+			break;
+		}
 		break;
 	default:
 		// Normal code.
@@ -334,6 +485,8 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		else if (c == ';')
 			stream->State = STATE_S0;
+		//else if (c == ':')
+		//	stream->State = STATE_T416;
 		else if (c == 'm')
 		{
 			stream->State = STATE_DONE;
