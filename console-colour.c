@@ -112,129 +112,11 @@ static const WORD
 	FOREGROUND = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
 	BACKGROUND = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 
-static WORD Make24Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
+static WORD NToColour(unsigned char attr)
 {
-	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
-	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
-	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
-	// matters.
-	const int
-		CONSOLE_COLOURS[16][3] = {
-			{0, 0, 0},
-			{85, 0, 0},
-			{0, 85, 0},
-			{85, 85, 0},
-			{0, 0, 85},
-			{85, 0, 85},
-			{0, 85, 85},
-			{171, 171, 171},
-			{85, 85, 85},
-			{171, 0, 0},
-			{0, 171, 0},
-			{171, 171, 0},
-			{0, 0, 171},
-			{171, 0, 171},
-			{0, 171, 171},
-			{255, 255, 255},
-	};
-
-	int
-		dist = INT_MAX;
-	WORD
-		found = 0;
-	for (WORD i = 0; i != 16; ++i)
+	switch (attr)
 	{
-		int
-			tr = (int)r - CONSOLE_COLOURS[i][0],
-			tg = (int)g - CONSOLE_COLOURS[i][1],
-			tb = (int)b - CONSOLE_COLOURS[i][2],
-			cur = (tr * tr) + (tg * tg) + (tb * tb);
-		if (cur < dist)
-		{
-			dist = cur;
-			found = i;
-		}
-	}
-
-	return found;
-}
-
-static WORD Make6Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
-{
-	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
-	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
-	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
-	// matters.
-	const int
-		CONSOLE_COLOURS[16][3] = {
-			{0, 0, 0},
-			{2, 0, 0},
-			{0, 2, 0},
-			{2, 2, 0},
-			{0, 0, 2},
-			{2, 0, 2},
-			{0, 2, 2},
-			{4, 4, 4},
-			{2, 2, 2},
-			{4, 0, 0},
-			{0, 4, 0},
-			{4, 4, 0},
-			{0, 0, 4},
-			{4, 0, 4},
-			{0, 4, 4},
-			{6, 6, 6},
-	};
-
-	int
-		dist = INT_MAX;
-	WORD
-		found = 0;
-	for (WORD i = 0; i != 16; ++i)
-	{
-		int
-			tr = (int)r - CONSOLE_COLOURS[i][0],
-			tg = (int)g - CONSOLE_COLOURS[i][1],
-			tb = (int)b - CONSOLE_COLOURS[i][2],
-			cur = (tr * tr) + (tg * tg) + (tb * tb);
-		if (cur < dist)
-		{
-			dist = cur;
-			found = i;
-		}
-	}
-
-	return found;
-}
-
-static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
-{
-	// Greyscales.  Find the nearest.
-	if (attr >= 250)
-		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
-	else if (attr >= 244)
-		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-	else if (attr >= 238)
-		return FOREGROUND_INTENSITY;
-	else if (attr >= 232)
-		return 0;
-	else if (attr >= 16)
-	{
-		// 216 colours.  Extract the RGB from the colour.  Then scale them to 8-bit.
-		attr -= 16;
-		unsigned char
-			r = attr / 36;
-		attr -= r * 36;
-		unsigned char
-			g = attr / 6;
-		attr -= g * 6;
-		unsigned char
-			b = attr;
-		return Make6Colour(r, g, b, stream);
-		return 0;
-	}
-	else switch (attr)
-	{
-	// Original colours.
+		// Original colours.
 	case 0:
 		// Black.
 		return 0;
@@ -285,6 +167,129 @@ static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
 		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 	}
 	return 0;
+}
+
+static WORD Make24Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
+{
+	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
+	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
+	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
+	// matters.
+	const int
+		CONSOLE_COLOURS[16][3] = {
+			{0, 0, 0},
+			{85, 0, 0},
+			{0, 85, 0},
+			{85, 85, 0},
+			{0, 0, 85},
+			{85, 0, 85},
+			{0, 85, 85},
+			{171, 171, 171},
+			{85, 85, 85},
+			{171, 0, 0},
+			{0, 171, 0},
+			{171, 171, 0},
+			{0, 0, 171},
+			{171, 0, 171},
+			{0, 171, 171},
+			{255, 255, 255},
+	};
+
+	int
+		dist = INT_MAX;
+	unsigned char
+		found = 0;
+	for (unsigned char i = 0; i != 16; ++i)
+	{
+		int
+			tr = (int)r - CONSOLE_COLOURS[i][0],
+			tg = (int)g - CONSOLE_COLOURS[i][1],
+			tb = (int)b - CONSOLE_COLOURS[i][2],
+			cur = (tr * tr) + (tg * tg) + (tb * tb);
+		if (cur < dist)
+		{
+			dist = cur;
+			found = i;
+		}
+	}
+
+	return NToColour(found);
+}
+
+static WORD Make6Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
+{
+	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
+	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
+	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
+	// matters.
+	const int
+		CONSOLE_COLOURS[16][3] = {
+			{0, 0, 0},
+			{2, 0, 0},
+			{0, 2, 0},
+			{2, 2, 0},
+			{0, 0, 2},
+			{2, 0, 2},
+			{0, 2, 2},
+			{4, 4, 4},
+			{2, 2, 2},
+			{4, 0, 0},
+			{0, 4, 0},
+			{4, 4, 0},
+			{0, 0, 4},
+			{4, 0, 4},
+			{0, 4, 4},
+			{6, 6, 6},
+	};
+
+	int
+		dist = INT_MAX;
+	unsigned char
+		found = 0;
+	for (unsigned char i = 0; i != 16; ++i)
+	{
+		int
+			tr = (int)r - CONSOLE_COLOURS[i][0],
+			tg = (int)g - CONSOLE_COLOURS[i][1],
+			tb = (int)b - CONSOLE_COLOURS[i][2],
+			cur = (tr * tr) + (tg * tg) + (tb * tb);
+		if (cur < dist)
+		{
+			dist = cur;
+			found = i;
+		}
+	}
+
+	return NToColour(found);
+}
+
+static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
+{
+	// Greyscales.  Find the nearest.
+	if (attr >= 250)
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	else if (attr >= 244)
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+	else if (attr >= 238)
+		return FOREGROUND_INTENSITY;
+	else if (attr >= 232)
+		return 0;
+	else if (attr >= 16)
+	{
+		// 216 colours.  Extract the RGB from the colour.  Then scale them to 8-bit.
+		attr -= 16;
+		unsigned char
+			r = attr / 36;
+		attr -= r * 36;
+		unsigned char
+			g = attr / 6;
+		attr -= g * 6;
+		unsigned char
+			b = attr;
+		return Make6Colour(r, g, b, stream);
+	}
+
+	return NToColour(attr);
 }
 
 static WORD GetColour(unsigned char attr, struct stream_s* const stream)
