@@ -159,6 +159,53 @@ static WORD Make24Colour(unsigned char r, unsigned char g, unsigned char b, stru
 	return found;
 }
 
+static WORD Make6Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
+{
+	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
+	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
+	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
+	// matters.
+	const int
+		CONSOLE_COLOURS[16][3] = {
+			{0, 0, 0},
+			{2, 0, 0},
+			{0, 2, 0},
+			{2, 2, 0},
+			{0, 0, 2},
+			{2, 0, 2},
+			{0, 2, 2},
+			{4, 4, 4},
+			{2, 2, 2},
+			{4, 0, 0},
+			{0, 4, 0},
+			{4, 4, 0},
+			{0, 0, 4},
+			{4, 0, 4},
+			{0, 4, 4},
+			{6, 6, 6},
+	};
+
+	int
+		dist = INT_MAX;
+	WORD
+		found = 0;
+	for (WORD i = 0; i != 16; ++i)
+	{
+		int
+			tr = (int)r - CONSOLE_COLOURS[i][0],
+			tg = (int)g - CONSOLE_COLOURS[i][1],
+			tb = (int)b - CONSOLE_COLOURS[i][2],
+			cur = (tr * tr) + (tg * tg) + (tb * tb);
+		if (cur < dist)
+		{
+			dist = cur;
+			found = i;
+		}
+	}
+
+	return found;
+}
+
 static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
 {
 	// Greyscales.  Find the nearest.
@@ -182,7 +229,7 @@ static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
 		attr -= g * 6;
 		unsigned char
 			b = attr;
-		return Make24Colour((unsigned char)((float)r * 8.0f / 5.0f), (unsigned char)((float)r * 8.0f / 5.0f), (unsigned char)((float)r * 8.0f / 5.0f), stream);
+		return Make6Colour(r, g, b, stream);
 		return 0;
 	}
 	else switch (attr)
