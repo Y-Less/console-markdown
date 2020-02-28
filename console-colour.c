@@ -121,20 +121,20 @@ static WORD Make24Colour(unsigned char r, unsigned char g, unsigned char b, stru
 	const int
 		CONSOLE_COLOURS[16][3] = {
 			{0, 0, 0},
-			{127, 0, 0},
-			{0, 127, 0},
-			{127, 127, 0},
-			{0, 0, 127},
-			{127, 0, 127},
-			{0, 127, 127},
+			{85, 0, 0},
+			{0, 85, 0},
+			{85, 85, 0},
+			{0, 0, 85},
+			{85, 0, 85},
+			{0, 85, 85},
 			{171, 171, 171},
 			{85, 85, 85},
-			{255, 0, 0},
-			{0, 255, 0},
-			{255, 255, 0},
-			{0, 0, 255},
-			{255, 0, 255},
-			{0, 255, 255},
+			{171, 0, 0},
+			{0, 171, 0},
+			{171, 171, 0},
+			{0, 0, 171},
+			{171, 0, 171},
+			{0, 171, 171},
 			{255, 255, 255},
 	};
 
@@ -145,9 +145,9 @@ static WORD Make24Colour(unsigned char r, unsigned char g, unsigned char b, stru
 	for (WORD i = 0; i != 16; ++i)
 	{
 		int
-			tr = r - CONSOLE_COLOURS[i][0],
-			tg = g - CONSOLE_COLOURS[i][1],
-			tb = b - CONSOLE_COLOURS[i][2],
+			tr = (int)r - CONSOLE_COLOURS[i][0],
+			tg = (int)g - CONSOLE_COLOURS[i][1],
+			tb = (int)b - CONSOLE_COLOURS[i][2],
 			cur = (tr * tr) + (tg * tg) + (tb * tb);
 		if (cur < dist)
 		{
