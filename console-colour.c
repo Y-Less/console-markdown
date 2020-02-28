@@ -39,13 +39,18 @@ subhook_t
 
 static void Colour(struct stream_s * const stream)
 {
-	if (stream->Coloured)
+	if (!stream->Coloured)
 	{
-		SetConsoleTextAttribute(stream->Handle, stream->CurrentStyle);
+		// Colouring is disabled.  Just do nothing.
+		//SetConsoleTextAttribute(stream->Handle, stream->DefaultStyle & ~COMMON_LVB_REVERSE_VIDEO);
+	}
+	else if (stream->DefaultStyle & COMMON_LVB_REVERSE_VIDEO)
+	{
+		SetConsoleTextAttribute(stream->Handle, stream->CurrentStyle >> 4 & 0x0F | stream->CurrentStyle << 4 & 0xF0);
 	}
 	else
 	{
-		SetConsoleTextAttribute(stream->Handle, stream->DefaultStyle);
+		SetConsoleTextAttribute(stream->Handle, stream->CurrentStyle);
 	}
 }
 
@@ -105,81 +110,162 @@ void Backout(struct stream_s * const stream)
 
 static WORD GetColour(unsigned char attr, struct stream_s* const stream)
 {
+	WORD
+		current = stream->CurrentStyle;
+	const WORD
+		FOREGROUND = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+		BACKGROUND = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	switch (attr)
 	{
-	case 0:
-		// Default.
-		return stream->DefaultStyle;
 	case 1:
-		// Bold.
-		return FOREGROUND_INTENSITY;
+		return current | FOREGROUND_INTENSITY;
+	case 2:
+		return current & ~FOREGROUND_INTENSITY;
+	case 3:
+	case 7:
+		// Inverse.  Store the fact that it is inverted somewhere, and only apply it at the very
+		// last possible moment.
+		stream->DefaultStyle |= COMMON_LVB_REVERSE_VIDEO;
+		break;
+	case 23:
+	case 27:
+		stream->DefaultStyle &= ~COMMON_LVB_REVERSE_VIDEO;
+		break;
+	case 4:
+	case 21:
+		return current | COMMON_LVB_UNDERSCORE;
+	case 22:
+		return current & ~FOREGROUND_INTENSITY;
+	case 24:
+		return current & ~COMMON_LVB_UNDERSCORE;
+	case 39:
+		return current & ~FOREGROUND | stream->DefaultStyle & FOREGROUND;
+	case 49:
+		return current & ~BACKGROUND | stream->DefaultStyle & BACKGROUND;
+	case 30:
+		// Black.
+		return current & ~FOREGROUND;
 	case 31:
 		// Red.
-		return FOREGROUND_RED;
+		return current & ~FOREGROUND | FOREGROUND_RED;
 	case 32:
 		// Green.
-		return FOREGROUND_GREEN;
+		return current & ~FOREGROUND | FOREGROUND_GREEN;
 	case 33:
 		// Yellow.
-		return FOREGROUND_RED | FOREGROUND_GREEN;
+		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN;
 	case 34:
 		// Blue.
-		return FOREGROUND_BLUE;
+		return current & ~FOREGROUND | FOREGROUND_BLUE;
 	case 35:
 		// Magenta.
-		return FOREGROUND_RED | FOREGROUND_BLUE;
+		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_BLUE;
 	case 36:
 		// Cyan.
-		return FOREGROUND_GREEN | FOREGROUND_BLUE;
+		return current & ~FOREGROUND | FOREGROUND_GREEN | FOREGROUND_BLUE;
 	case 37:
 		// White.
-		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-	case 5:
-		// Blink (replace it).
-		return BACKGROUND_INTENSITY;
+		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+	case 40:
+		// Black.
+		return current & ~BACKGROUND;
 	case 41:
 		// Red.
-		return BACKGROUND_RED;
+		return current & ~BACKGROUND | BACKGROUND_RED;
 	case 42:
 		// Green.
-		return BACKGROUND_GREEN;
+		return current & ~BACKGROUND | BACKGROUND_GREEN;
 	case 43:
 		// Yellow.
-		return BACKGROUND_RED | BACKGROUND_GREEN;
+		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN;
 	case 44:
 		// Blue.
-		return BACKGROUND_BLUE;
+		return current & ~BACKGROUND | BACKGROUND_BLUE;
 	case 45:
 		// Magenta.
-		return BACKGROUND_RED | BACKGROUND_BLUE;
+		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_BLUE;
 	case 46:
 		// Cyan.
-		return BACKGROUND_GREEN | BACKGROUND_BLUE;
+		return current & ~BACKGROUND | BACKGROUND_GREEN | BACKGROUND_BLUE;
 	case 47:
 		// White.
-		return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
+		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
+	case 60 + 30:
+		// Black.
+		return current & ~FOREGROUND | FOREGROUND_INTENSITY;
+	case 60 + 31:
+		// Red.
+		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_INTENSITY;
+	case 60 + 32:
+		// Green.
+		return current & ~FOREGROUND | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+	case 60 + 33:
+		// Yellow.
+		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+	case 60 + 34:
+		// Blue.
+		return current & ~FOREGROUND | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	case 60 + 35:
+		// Magenta.
+		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	case 60 + 36:
+		// Cyan.
+		return current & ~FOREGROUND | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	case 60 + 37:
+		// White.
+		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	case 60 + 40:
+		// Black.
+		return current & ~BACKGROUND | BACKGROUND_INTENSITY;
+	case 60 + 41:
+		// Red.
+		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_INTENSITY;
+	case 60 + 42:
+		// Green.
+		return current & ~BACKGROUND | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+	case 60 + 43:
+		// Yellow.
+		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+	case 60 + 44:
+		// Blue.
+		return current & ~BACKGROUND | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+	case 60 + 45:
+		// Magenta.
+		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+	case 60 + 46:
+		// Cyan.
+		return current & ~BACKGROUND | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+	case 60 + 47:
+		// White.
+		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	}
-	return 0;
+	return current;
 }
 
 static void GetColours(struct stream_s * const stream)
 {
-	stream->CurrentStyle = GetColour(stream->Attr0, stream);
-	if (stream->Attr1)
+	switch (stream->Attr0)
 	{
-		stream->CurrentStyle |= GetColour(stream->Attr1, stream);
-	}
-	if (stream->Attr2)
-	{
-		stream->CurrentStyle |= GetColour(stream->Attr2, stream);
-	}
-	if (stream->Attr3)
-	{
-		stream->CurrentStyle |= GetColour(stream->Attr3, stream);
-	}
-	if (stream->Attr4)
-	{
-		stream->CurrentStyle |= GetColour(stream->Attr4, stream);
+	case 0:
+		// Reset.
+		stream->DefaultStyle &= ~COMMON_LVB_REVERSE_VIDEO;
+		stream->CurrentStyle = stream->DefaultStyle;
+		break;
+	case 38:
+		// Special foreground colour.
+		// TODO: Find the closest working colour from the 16 available.
+		break;
+	case 48:
+		// Special background colour.
+		break;
+	default:
+		// Normal code.
+		stream->CurrentStyle = GetColour(stream->Attr0, stream);
+		stream->CurrentStyle = GetColour(stream->Attr1, stream);
+		stream->CurrentStyle = GetColour(stream->Attr2, stream);
+		stream->CurrentStyle = GetColour(stream->Attr3, stream);
+		stream->CurrentStyle = GetColour(stream->Attr4, stream);
+		break;
 	}
 }
 
