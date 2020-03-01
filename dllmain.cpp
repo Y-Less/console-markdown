@@ -7,12 +7,14 @@
 
 #define CONSOLECOLOUR_API __declspec(dllexport)
 
-static int OutputC_Console(void* data, wchar_t c, struct console_colour_stream_s* const stream)
+static int
+	OutputC(void* data, wchar_t c, struct console_colour_stream_s* const stream)
 {
 	return WriteConsoleW(data, &c, 1, NULL, NULL) ? 1 : 0;
 }
 
-static int OutputA_Console(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
+static int
+	OutputA(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
 {
 	DWORD
 		ret = 0;
@@ -20,7 +22,8 @@ static int OutputA_Console(void* data, char const* c, int len, struct console_co
 	return ret;
 }
 
-static int OutputW_Console(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
+static int
+	OutputW(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
 {
 	DWORD
 		ret = 0;
@@ -28,17 +31,18 @@ static int OutputW_Console(void* data, wchar_t const* c, int len, struct console
 	return ret;
 }
 
-static void OutputColour_Console(void* data, unsigned short colour, struct console_colour_stream_s* const stream)
+static void
+	OutputColour(void* data, unsigned short colour, struct console_colour_stream_s* const stream)
 {
 	SetConsoleTextAttribute(data, colour);
 }
 
 static struct console_colour_call_s
 	gConsoleStreamCall = {
-		&OutputC_Console,
-		&OutputA_Console,
-		&OutputW_Console,
-		&OutputColour_Console,
+		&OutputC,
+		&OutputA,
+		&OutputW,
+		&OutputColour,
 	};
 
 static struct console_colour_stream_s
@@ -49,8 +53,7 @@ static struct console_colour_stream_s
 
 extern "C"
 {
-	BOOL
-		WINAPI
+	BOOL WINAPI
 		Hook_WriteConsoleA(
 			_In_ HANDLE hConsoleOutput,
 			_In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
@@ -77,8 +80,7 @@ extern "C"
 		return TRUE;
 	}
 
-	BOOL
-		WINAPI
+	BOOL WINAPI
 		Hook_WriteConsoleW(
 			_In_ HANDLE hConsoleOutput,
 			_In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
@@ -109,19 +111,22 @@ extern "C"
 		WriteConsoleA_ = 0,
 		WriteConsoleW_ = 0;
 
-	void RemoveStreamHooks()
+	void
+		RemoveStreamHooks()
 	{
 		subhook_remove(WriteConsoleA_);
 		subhook_remove(WriteConsoleW_);
 	}
 
-	void ReaddStreamHooks()
+	void
+		ReaddStreamHooks()
 	{
 		subhook_install(WriteConsoleW_);
 		subhook_install(WriteConsoleA_);
 	}
 
-	CONSOLECOLOUR_API void InstallConsoleColour(void)
+	CONSOLECOLOUR_API void
+		InstallConsoleColour(void)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO
 			info;
@@ -149,7 +154,8 @@ extern "C"
 		}
 	}
 
-	CONSOLECOLOUR_API void UninstallConsoleColour(void)
+	CONSOLECOLOUR_API void
+		UninstallConsoleColour(void)
 	{
 		HANDLE
 			handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -169,19 +175,9 @@ extern "C"
 	}
 }
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY
+	DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
-    case DLL_PROCESS_DETACH:
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-        break;
-    }
     return TRUE;
 }
 
