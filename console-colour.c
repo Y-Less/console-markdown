@@ -3,7 +3,6 @@
 #ifdef CONMD_WINDOWS
 
 #include <stdio.h>
-#include "subhook/subhook.h"
 
 static int OutputC(wchar_t c, struct stream_s * const stream)
 {
@@ -32,10 +31,6 @@ struct stream_s
 		STATE_NONE,
 		true,
 	};
-
-subhook_t
-	WriteConsoleA_ = 0,
-	WriteConsoleW_ = 0;
 
 static void Colour(struct stream_s * const stream)
 {
@@ -668,10 +663,17 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	return /*stream->*/OutputC(c, stream);
 }
 
+#if defined CONMD_HOOKS
+	#define MAYBE_REMOVE_HOOKS() RemoveStreamHooks()
+	#define MAYBE_READD_HOOKS() ReaddStreamHooks()
+#else
+	#define MAYBE_REMOVE_HOOKS() ((void)0)
+	#define MAYBE_READD_HOOKS() ((void)0)
+#endif
+	
 int WriteColouredA(char const * s, int n, struct stream_s* const stream)
 {
-	subhook_remove(WriteConsoleA_);
-	subhook_remove(WriteConsoleW_);
+	MAYBE_REMOVE_HOOKS();
 	char const
 		* cur,
 		* start = s,
@@ -679,8 +681,7 @@ int WriteColouredA(char const * s, int n, struct stream_s* const stream)
 	// Just in case.
 	if (n == 0 || s == NULL)
 	{
-		subhook_install(WriteConsoleW_);
-		subhook_install(WriteConsoleA_);
+		MAYBE_READD_HOOKS();
 		return 0;
 	}
 	int
@@ -740,8 +741,7 @@ WriteColoured_loop_done:
 			ret += wrote;
 			if (wrote != esc - s)
 			{
-				subhook_install(WriteConsoleW_);
-				subhook_install(WriteConsoleA_);
+				MAYBE_READD_HOOKS();
 				return (int)(s - start + wrote);
 			}
 		}
@@ -765,15 +765,13 @@ WriteColoured_loop_done:
 	Colour(stream);
 	int
 		wrote = OutputA(s, (int)(end - s), stream);
-	subhook_install(WriteConsoleW_);
-	subhook_install(WriteConsoleA_);
+	MAYBE_READD_HOOKS();
 	return (int)(s - start + wrote);
 }
 
 int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
 {
-	subhook_remove(WriteConsoleA_);
-	subhook_remove(WriteConsoleW_);
+	MAYBE_REMOVE_HOOKS();
 	wchar_t const
 		* cur,
 		* start = s,
@@ -781,8 +779,7 @@ int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
 	// Just in case.
 	if (n == 0 || s == NULL)
 	{
-		subhook_install(WriteConsoleW_);
-		subhook_install(WriteConsoleA_);
+		MAYBE_READD_HOOKS();
 		return 0;
 	}
 	int
@@ -842,8 +839,7 @@ WriteColoured_loop_done:
 			ret += wrote;
 			if (wrote != esc - s)
 			{
-				subhook_install(WriteConsoleW_);
-				subhook_install(WriteConsoleA_);
+				MAYBE_READD_HOOKS();
 				return (int)(s - start + wrote);
 			}
 		}
@@ -867,128 +863,8 @@ WriteColoured_loop_done:
 	Colour(stream);
 	int
 		wrote = OutputW(s, (int)(end - s), stream);
-	subhook_install(WriteConsoleW_);
-	subhook_install(WriteConsoleA_);
+	MAYBE_READD_HOOKS();
 	return (int)(s - start + wrote);
-}
-
-BOOL
-WINAPI
-Hook_WriteConsoleA(
-	_In_ HANDLE hConsoleOutput,
-	_In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
-	_In_ DWORD nNumberOfCharsToWrite,
-	_Out_opt_ LPDWORD lpNumberOfCharsWritten,
-	_Reserved_ LPVOID lpReserved
-)
-{
-	if (nNumberOfCharsToWrite == 0)
-	{
-		if (lpNumberOfCharsWritten)
-		{
-			*lpNumberOfCharsWritten = 0;
-		}
-		return TRUE;
-	}
-	gStream.Handle = hConsoleOutput;
-	int
-		num = WriteColouredA((char const *)lpBuffer, nNumberOfCharsToWrite, &gStream);
-	if (lpNumberOfCharsWritten)
-	{
-		*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
-	}
-	return TRUE;
-	//if (lpNumberOfCharsWritten)
-	//{
-	//	*lpNumberOfCharsWritten = num;
-	//}
-	//return num != 0;
-}
-
-BOOL
-WINAPI
-Hook_WriteConsoleW(
-	_In_ HANDLE hConsoleOutput,
-	_In_reads_(nNumberOfCharsToWrite) CONST VOID* lpBuffer,
-	_In_ DWORD nNumberOfCharsToWrite,
-	_Out_opt_ LPDWORD lpNumberOfCharsWritten,
-	_Reserved_ LPVOID lpReserved
-)
-{
-	if (nNumberOfCharsToWrite == 0)
-	{
-		if (lpNumberOfCharsWritten)
-		{
-			*lpNumberOfCharsWritten = 0;
-		}
-		return TRUE;
-	}
-	gStream.Handle = hConsoleOutput;
-	int
-		num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gStream);
-	if (lpNumberOfCharsWritten)
-	{
-		*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
-	}
-	return TRUE;
-	//if (lpNumberOfCharsWritten)
-	//{
-	//	*lpNumberOfCharsWritten = num;
-	//}
-	//return num != 0;
-}
-
-void InitStreamHooks()
-{
-	CONSOLE_SCREEN_BUFFER_INFO
-		info;
-	HANDLE
-		handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	GetConsoleScreenBufferInfo(handle, &info);
-	gStream.CurrentStyle = gStream.DefaultStyle = info.wAttributes;
-
-	if (!WriteConsoleA_)
-	{
-		WriteConsoleA_ = subhook_new((void*)&WriteConsoleA, (void*)&Hook_WriteConsoleA, SUBHOOK_64BIT_OFFSET);
-	}
-	if (WriteConsoleA_)
-	{
-		subhook_install(WriteConsoleA_);
-	}
-	if (!WriteConsoleW_)
-	{
-		WriteConsoleW_ = subhook_new((void*)&WriteConsoleW, (void*)&Hook_WriteConsoleW, SUBHOOK_64BIT_OFFSET);
-	}
-	if (WriteConsoleW_)
-	{
-		subhook_install(WriteConsoleW_);
-	}
-}
-
-void DeinitStreamHooks()
-{
-	HANDLE
-		handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(handle, gStream.DefaultStyle);
-	if (WriteConsoleA_)
-	{
-		subhook_remove(WriteConsoleA_);
-		subhook_free(WriteConsoleA_);
-		WriteConsoleA_ = 0;
-	}
-	if (WriteConsoleW_)
-	{
-		subhook_remove(WriteConsoleW_);
-		subhook_free(WriteConsoleW_);
-		WriteConsoleW_ = 0;
-	}
-}
-
-#else
-
-void InitStreamHooks()
-{
 }
 
 #endif
