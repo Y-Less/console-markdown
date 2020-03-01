@@ -91,7 +91,8 @@ I hope you are OK, like `someCode()` is.
   
 )"_cmdmd;
 
-    WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), output.c_str(), output.length(), NULL, NULL);
+    //WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), output.c_str(), output.length(), NULL, NULL);
+    std::cout << output;
 
 	return 0;
 }

@@ -79,13 +79,13 @@ private:
 	template <>
 	size_type WriteColouredX<char>(char const * data, size_type len)
 	{
-		return ::WriteColouredA(data, (int)len, &gStream);
+		return ::WriteColouredA(data, (int)len, &stream_);
 	}
 
 	template <>
 	size_type WriteColouredX<wchar_t>(wchar_t const * data, size_type len)
 	{
-		return ::WriteColouredW(data, (int)len, &gStream);
+		return ::WriteColouredW(data, (int)len, &stream_);
 	}
 
 	static int OutputC(void* data, wchar_t c, struct console_colour_stream_s* const stream);
@@ -109,7 +109,8 @@ public:
 			&OutputC,
 			&OutputA,
 			&OutputW,
-			&OutputColour
+			&OutputColour,
+			(void *)this
 		},
 		stream_{
 			&call_,
@@ -177,7 +178,7 @@ protected:
 #ifdef CONMD_WINDOWS
 		// If they flush mid sequence there's not a lot we can do about it!  We can't keep buffering
 		// characters under the hood, even via a state machine, if they explicitly requested a flush.
-		::Backout(&gStream);
+		::Backout(&stream_);
 		return 0;
 #else
 		return buffer_.pubsync();

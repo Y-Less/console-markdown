@@ -35,7 +35,7 @@ void
 	{
 		ColouredBuffer<char>*
 			ptr = (ColouredBuffer<char>*)data;
-		ptr->buffer_.sputc((char)c);
+		return ptr->buffer_.sputc((char)c) != std::char_traits<char>::eof();
 	}
 
 	int
@@ -44,7 +44,7 @@ void
 	{
 		ColouredBuffer<char>*
 			ptr = (ColouredBuffer<char>*)data;
-		ptr->buffer_.sputn(c, len);
+		return (int)ptr->buffer_.sputn(c, len);
 	}
 
 	int
@@ -52,6 +52,7 @@ void
 		OutputW(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
 	{
 		// Do nothing.
+		return 0;
 	}
 
 	void
@@ -72,7 +73,7 @@ void
 	{
 		ColouredBuffer<wchar_t>*
 			ptr = (ColouredBuffer<wchar_t>*)data;
-		ptr->buffer_.sputc(c);
+		return ptr->buffer_.sputc(c) != std::char_traits<wchar_t>::eof();
 	}
 
 	int
@@ -80,6 +81,7 @@ void
 		OutputA(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
 	{
 		// Do nothing.
+		return 0;
 	}
 
 	int
@@ -88,7 +90,7 @@ void
 	{
 		ColouredBuffer<wchar_t>*
 			ptr = (ColouredBuffer<wchar_t>*)data;
-		ptr->buffer_.sputn(c, len);
+		return (int)ptr->buffer_.sputn(c, len);
 	}
 
 	void
