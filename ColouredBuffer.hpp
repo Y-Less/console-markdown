@@ -67,30 +67,31 @@ private:
 	HANDLE
 		handle_;
 
+	struct console_colour_stream_s
+		stream_;
+
+	struct console_colour_call_s
+		call_;
+
 	template <typename C2>
 	size_type WriteColouredX(C2 const * data, size_type len);
 
 	template <>
 	size_type WriteColouredX<char>(char const * data, size_type len)
 	{
-		bool tmp = gStream.Coloured;
-		gStream.Coloured = coloured_;
-		gStream.Handle = handle_;
-		auto ret = ::WriteColouredA(data, (int)len, &gStream);
-		gStream.Coloured = tmp;
-		return ret;
+		return ::WriteColouredA(data, (int)len, &gStream);
 	}
 
 	template <>
 	size_type WriteColouredX<wchar_t>(wchar_t const * data, size_type len)
 	{
-		bool tmp = gStream.Coloured;
-		gStream.Coloured = coloured_;
-		gStream.Handle = handle_;
-		auto ret = ::WriteColouredW(data, (int)len, &gStream);
-		gStream.Coloured = tmp;
-		return ret;
+		return ::WriteColouredW(data, (int)len, &gStream);
 	}
+
+	static int OutputC(void* data, wchar_t c, struct console_colour_stream_s* const stream);
+	static int OutputA(void* data, char const* c, int len, struct console_colour_stream_s* const stream);
+	static int OutputW(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream);
+	static void OutputColour(void* data, unsigned short colour, struct console_colour_stream_s* const stream);
 
 #endif
 
@@ -103,7 +104,17 @@ public:
 		buffer_(*src.rdbuf()),
 		coloured_(coloured),
 		src_(&src),
-		handle_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE))
+		handle_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
+		call_{
+			&OutputC,
+			&OutputA,
+			&OutputW,
+			&OutputColour
+		},
+		stream_{
+			&call_,
+			&gConsoleStreamState,
+		}
 	{
 		src_->rdbuf(this);
 		CONSOLE_SCREEN_BUFFER_INFO
@@ -112,7 +123,7 @@ public:
 			handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 		GetConsoleScreenBufferInfo(handle, &info);
-		gStream.CurrentStyle = gStream.DefaultStyle = info.wAttributes;
+		stream_.State->CurrentStyle = stream_.State->DefaultStyle = info.wAttributes;
 	}
 
 	// dest
@@ -124,7 +135,7 @@ public:
 		}
 		HANDLE
 			handle = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(handle, gStream.DefaultStyle);
+		SetConsoleTextAttribute(handle, stream_.State->DefaultStyle);
 	}
 #else
 	// cons
@@ -181,11 +192,14 @@ protected:
 
 template class ColouredBuffer<char>;
 template class ColouredBuffer<wchar_t>;
-template class ColouredBuffer<char>;
-template class ColouredBuffer<wchar_t>;
 
 #ifdef CONMD_WINDOWS
 	#pragma warning(pop)
 #endif
 };
+
+
+
+
+
 

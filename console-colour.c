@@ -4,7 +4,7 @@ struct console_colour_state_s
 	gConsoleStreamState = {
 		0x80,
 		STATE_NONE,
-		true,
+		//true,
 };
 
 #ifdef CONMD_WINDOWS
@@ -29,11 +29,12 @@ static int OutputW(wchar_t const * c, int len, struct console_colour_stream_s * 
 
 static void Colour(struct console_colour_stream_s * const stream)
 {
-	if (!stream->State->Coloured)
-	{
-		// Colouring is disabled.  Just do nothing.
-	}
-	else if (stream->State->DefaultStyle & COMMON_LVB_REVERSE_VIDEO)
+	//if (!stream->State->Coloured)
+	//{
+	//	// Colouring is disabled.  Just do nothing.
+	//}
+	//else
+	if (stream->State->DefaultStyle & COMMON_LVB_REVERSE_VIDEO)
 	{
 		stream->Call->OutputColour(stream->Call->Data, stream->State->CurrentStyle >> 4 & 0x0F | stream->State->CurrentStyle << 4 & 0xF0, stream);
 	}
@@ -434,7 +435,7 @@ static int RunStateMachine(wchar_t c, struct console_colour_stream_s * const str
 	switch (stream->State->State)
 	{
 	case STATE_NONE:
-		if (stream->State->Coloured)
+		//if (stream->State->Coloured)
 		{
 			switch (c)
 			{
@@ -687,7 +688,7 @@ int WriteColouredA(char const * s, int n, struct console_colour_stream_s* const 
 		}
 		char const *
 			esc = s;
-		if (stream->State->Coloured)
+		//if (stream->State->Coloured)
 		{
 			for (cur = s; cur != end; ++cur)
 			{
@@ -717,13 +718,13 @@ WriteColoured_loop_done:
 				break;
 			}
 		}
-		else
-		{
-			esc = strchr(s, '\x1B');
-			if (esc == NULL)
-				break;
-			stream->State->State = STATE_ESC;
-		}
+		//else
+		//{
+		//	esc = strchr(s, '\x1B');
+		//	if (esc == NULL)
+		//		break;
+		//	stream->State->State = STATE_ESC;
+		//}
 		// Write the bit before the escape sequence.
 		if (esc != s)
 		{
@@ -785,7 +786,7 @@ int WriteColouredW(wchar_t const * s, int n, struct console_colour_stream_s* con
 		}
 		wchar_t const *
 			esc = s;
-		if (stream->State->Coloured)
+		//if (stream->State->Coloured)
 		{
 			for (cur = s; cur != end; ++cur)
 			{
@@ -815,13 +816,13 @@ WriteColoured_loop_done:
 				break;
 			}
 		}
-		else
-		{
-			esc = wcschr(s, '\x1B');
-			if (esc == NULL)
-				break;
-			stream->State->State = STATE_ESC;
-		}
+		//else
+		//{
+		//	esc = wcschr(s, '\x1B');
+		//	if (esc == NULL)
+		//		break;
+		//	stream->State->State = STATE_ESC;
+		//}
 		// Write the bit before the escape sequence.
 		if (esc != s)
 		{

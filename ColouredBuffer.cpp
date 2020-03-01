@@ -28,6 +28,82 @@ void
 #endif
 }
 
+#ifdef CONMD_WINDOWS
+	int
+		ColouredBuffer<char>::
+		OutputC(void* data, wchar_t c, struct console_colour_stream_s* const stream)
+	{
+		ColouredBuffer<char>*
+			ptr = (ColouredBuffer<char>*)data;
+		ptr->buffer_.sputc((char)c);
+	}
+
+	int
+		ColouredBuffer<char>::
+		OutputA(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
+	{
+		ColouredBuffer<char>*
+			ptr = (ColouredBuffer<char>*)data;
+		ptr->buffer_.sputn(c, len);
+	}
+
+	int
+		ColouredBuffer<char>::
+		OutputW(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
+	{
+		// Do nothing.
+	}
+
+	void
+		ColouredBuffer<char>::
+		OutputColour(void* data, unsigned short colour, struct console_colour_stream_s* const stream)
+	{
+		ColouredBuffer<char>*
+			ptr = (ColouredBuffer<char>*)data;
+		if (ptr->coloured_)
+		{
+			SetConsoleTextAttribute(ptr->handle_, colour);
+		}
+	}
+
+	int
+		ColouredBuffer<wchar_t>::
+		OutputC(void* data, wchar_t c, struct console_colour_stream_s* const stream)
+	{
+		ColouredBuffer<wchar_t>*
+			ptr = (ColouredBuffer<wchar_t>*)data;
+		ptr->buffer_.sputc(c);
+	}
+
+	int
+		ColouredBuffer<wchar_t>::
+		OutputA(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
+	{
+		// Do nothing.
+	}
+
+	int
+		ColouredBuffer<wchar_t>::
+		OutputW(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
+	{
+		ColouredBuffer<wchar_t>*
+			ptr = (ColouredBuffer<wchar_t>*)data;
+		ptr->buffer_.sputn(c, len);
+	}
+
+	void
+		ColouredBuffer<wchar_t>::
+		OutputColour(void* data, unsigned short colour, struct console_colour_stream_s* const stream)
+	{
+		ColouredBuffer<wchar_t>*
+			ptr = (ColouredBuffer<wchar_t>*)data;
+		if (ptr->coloured_)
+		{
+			SetConsoleTextAttribute(ptr->handle_, colour);
+		}
+	}
+#endif
+
 #if defined _DEBUG
 	void DumpColouredBufferExamples()
 	{

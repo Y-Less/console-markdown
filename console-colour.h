@@ -69,8 +69,8 @@ struct console_colour_state_s
 	enum STATE_E
 		State;
 
-	bool
-		Coloured;
+	//bool
+	//	Coloured;
 
 	WORD
 		DefaultStyle,
@@ -82,7 +82,6 @@ struct console_colour_state_s
 		Attr2,
 		Attr3,
 		Attr4;
-
 };
 
 struct console_colour_stream_s
