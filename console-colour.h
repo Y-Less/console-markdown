@@ -36,9 +36,32 @@ enum STATE_E
 	STATE_SKIP,        // Multi-byte character.
 };
 
-struct stream_s;
+struct console_colour_stream_s;
 
-struct stream_s
+typedef int (*OutputC_)(void * data, wchar_t c, struct console_colour_stream_s* const stream);
+typedef int (*OutputA_)(void * data, char const* c, int len, struct console_colour_stream_s* const stream);
+typedef int (*OutputW_)(void * data, wchar_t const* c, int len, struct console_colour_stream_s* const stream);
+typedef void (*OutputColour_)(void * data, unsigned short colour, struct console_colour_stream_s* const stream);
+
+struct console_colour_call_s
+{
+	OutputC_
+		OutputC;
+
+	OutputA_
+		OutputA;
+
+	OutputW_
+		OutputW;
+
+	OutputColour_
+		OutputColour;
+
+	void*
+		Data;
+};
+
+struct console_colour_state_s
 {
 	wchar_t
 		UnicodeMask;
@@ -48,9 +71,6 @@ struct stream_s
 
 	bool
 		Coloured;
-
-	HANDLE
-		Handle;
 
 	WORD
 		DefaultStyle,
@@ -62,26 +82,36 @@ struct stream_s
 		Attr2,
 		Attr3,
 		Attr4;
+
+};
+
+struct console_colour_stream_s
+{
+	struct console_colour_call_s *
+		Call;
+
+	struct console_colour_state_s *
+		State;
 };
 
 #else
 
 // Empty, just to exist.
-struct stream_s
+struct console_colour_stream_s
 {
 };
 
 #endif
 
-extern struct stream_s
-	gStream;
+extern struct console_colour_state_s
+	gConsoleStreamState;
 
 void ReaddStreamHooks();
 void RemoveStreamHooks();
 
-int WriteColouredW(wchar_t const* s, int n, struct stream_s* const stream);
-int WriteColouredA(char const* s, int n, struct stream_s* const stream);
-void Backout(struct stream_s* const stream);
+int WriteColouredW(wchar_t const* s, int n, struct console_colour_stream_s* const stream);
+int WriteColouredA(char const* s, int n, struct console_colour_stream_s* const stream);
+void Backout(struct console_colour_stream_s* const stream);
 
 #ifdef __cplusplus
 }

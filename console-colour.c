@@ -1,64 +1,57 @@
 #include "console-colour.h"
 
-#ifdef CONMD_WINDOWS
-
-#include <stdio.h>
-
-static int OutputC(wchar_t c, struct stream_s * const stream)
-{
-	return WriteConsoleW(stream->Handle, &c, 1, NULL, NULL) ? 1 : 0;
-}
-
-static int OutputA(char const * c, int len, struct stream_s * const stream)
-{
-	DWORD
-		ret = 0;
-	WriteConsoleA(stream->Handle, c, len, &ret, NULL);
-	return ret;
-}
-
-static int OutputW(wchar_t const * c, int len, struct stream_s * const stream)
-{
-	DWORD
-		ret = 0;
-	WriteConsoleW(stream->Handle, c, len, &ret, NULL);
-	return ret;
-}
-
-struct stream_s
-	gStream = {
+struct console_colour_state_s
+	gConsoleStreamState = {
 		0x80,
 		STATE_NONE,
 		true,
-	};
+};
 
-static void Colour(struct stream_s * const stream)
+#ifdef CONMD_WINDOWS
+
+#include <stdio.h>
+#include <limits.h>
+
+static int OutputC(wchar_t c, struct console_colour_stream_s * const stream)
 {
-	if (!stream->Coloured)
+	return stream->Call->OutputC(stream->Call->Data, c, stream);
+}
+
+static int OutputA(char const * c, int len, struct console_colour_stream_s * const stream)
+{
+	return stream->Call->OutputA(stream->Call->Data, c, len, stream);
+}
+
+static int OutputW(wchar_t const * c, int len, struct console_colour_stream_s * const stream)
+{
+	return stream->Call->OutputW(stream->Call->Data, c, len, stream);
+}
+
+static void Colour(struct console_colour_stream_s * const stream)
+{
+	if (!stream->State->Coloured)
 	{
 		// Colouring is disabled.  Just do nothing.
-		//SetConsoleTextAttribute(stream->Handle, stream->DefaultStyle & ~COMMON_LVB_REVERSE_VIDEO);
 	}
-	else if (stream->DefaultStyle & COMMON_LVB_REVERSE_VIDEO)
+	else if (stream->State->DefaultStyle & COMMON_LVB_REVERSE_VIDEO)
 	{
-		SetConsoleTextAttribute(stream->Handle, stream->CurrentStyle >> 4 & 0x0F | stream->CurrentStyle << 4 & 0xF0);
+		stream->Call->OutputColour(stream->Call->Data, stream->State->CurrentStyle >> 4 & 0x0F | stream->State->CurrentStyle << 4 & 0xF0, stream);
 	}
 	else
 	{
-		SetConsoleTextAttribute(stream->Handle, stream->CurrentStyle);
+		stream->Call->OutputColour(stream->Call->Data, stream->State->CurrentStyle, stream);
 	}
 }
 
-void Backout(struct stream_s * const stream)
+void Backout(struct console_colour_stream_s * const stream)
 {
 	// Back out of the buffering.
 	char backout[32] = "";
 	// Run the state machine.
-	switch (stream->State)
+	switch (stream->State->State)
 	{
-	case STATE_SKIP:
+	default:
 		// Skip might be an issue - we are in the middle of a multi-byte character...
-	case STATE_NONE:
 		return;
 	case STATE_ESC:
 		sprintf_s(backout, sizeof (backout), "\x1B");
@@ -67,31 +60,31 @@ void Backout(struct stream_s * const stream)
 		sprintf_s(backout, sizeof (backout), "\x1B[");
 		break;
 	case STATE_A00:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d", stream->Attr0);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d", stream->State->Attr0);
 		break;
 	case STATE_S0:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;", stream->Attr0);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;", stream->State->Attr0);
 		break;
 	case STATE_A10:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d", stream->Attr0, stream->Attr1);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d", stream->State->Attr0, stream->State->Attr1);
 		break;
 	case STATE_S1:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;", stream->Attr0, stream->Attr1);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;", stream->State->Attr0, stream->State->Attr1);
 		break;
 	case STATE_A20:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d", stream->State->Attr0, stream->State->Attr1, stream->State->Attr2);
 		break;
 	case STATE_S2:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;", stream->Attr0, stream->Attr1, stream->Attr2);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;", stream->State->Attr0, stream->State->Attr1, stream->State->Attr2);
 		break;
 	case STATE_A30:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d", stream->State->Attr0, stream->State->Attr1, stream->State->Attr2, stream->State->Attr3);
 		break;
 	case STATE_S3:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d;", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d;", stream->State->Attr0, stream->State->Attr1, stream->State->Attr2, stream->State->Attr3);
 		break;
 	case STATE_A40:
-		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d;%d", stream->Attr0, stream->Attr1, stream->Attr2, stream->Attr3, stream->Attr4);
+		sprintf_s(backout, sizeof (backout), "\x1B[%d;%d;%d;%d;%d", stream->State->Attr0, stream->State->Attr1, stream->State->Attr2, stream->State->Attr3, stream->State->Attr4);
 		break;
 	}
 	if (backout[0])
@@ -99,8 +92,8 @@ void Backout(struct stream_s * const stream)
 		Colour(stream);
 		OutputA(backout, (int)strlen(backout), stream);
 	}
-	stream->State = STATE_NONE;
-	stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = stream->Attr4 = 0;
+	stream->State->State = STATE_NONE;
+	stream->State->Attr0 = stream->State->Attr1 = stream->State->Attr2 = stream->State->Attr3 = stream->State->Attr4 = 0;
 }
 
 static const WORD
@@ -172,7 +165,7 @@ static unsigned char Shuffle6Colour(unsigned char colour)
 	return ORDER[colour];
 }
 
-static WORD Make6Colour(int r, int g, int b, struct stream_s* const stream)
+static WORD Make6Colour(int r, int g, int b, struct console_colour_stream_s* const stream)
 {
 	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
 	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
@@ -221,7 +214,7 @@ static WORD Make6Colour(int r, int g, int b, struct stream_s* const stream)
 	return NToColour(Shuffle6Colour(found));
 }
 
-static WORD Make24Colour(int r, int g, int b, struct stream_s* const stream)
+static WORD Make24Colour(int r, int g, int b, struct console_colour_stream_s* const stream)
 {
 	// Use the reduced 6-value colour space mapping, since we've tweaked that a lot already.
 	r = r + 25 / 51; // Rounding division, to get the component from 0-5 (inclusive).
@@ -230,7 +223,7 @@ static WORD Make24Colour(int r, int g, int b, struct stream_s* const stream)
 	return Make6Colour(r, g, b, stream);
 }
 
-static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
+static WORD Make256Colour(unsigned char attr, struct console_colour_stream_s * const stream)
 {
 	// Greyscales.  Find the nearest.
 	if (attr >= 250)
@@ -255,10 +248,10 @@ static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
 	return NToColour(attr);
 }
 
-static WORD GetColour(unsigned char attr, struct stream_s* const stream)
+static WORD GetColour(unsigned char attr, struct console_colour_stream_s* const stream)
 {
 	WORD
-		current = stream->CurrentStyle;
+		current = stream->State->CurrentStyle;
 	switch (attr)
 	{
 	case 1:
@@ -269,11 +262,11 @@ static WORD GetColour(unsigned char attr, struct stream_s* const stream)
 	case 7:
 		// Inverse.  Store the fact that it is inverted somewhere, and only apply it at the very
 		// last possible moment.
-		stream->DefaultStyle |= COMMON_LVB_REVERSE_VIDEO;
+		stream->State->DefaultStyle |= COMMON_LVB_REVERSE_VIDEO;
 		break;
 	case 23:
 	case 27:
-		stream->DefaultStyle &= ~COMMON_LVB_REVERSE_VIDEO;
+		stream->State->DefaultStyle &= ~COMMON_LVB_REVERSE_VIDEO;
 		break;
 	case 4:
 	case 21:
@@ -283,9 +276,9 @@ static WORD GetColour(unsigned char attr, struct stream_s* const stream)
 	case 24:
 		return current & ~COMMON_LVB_UNDERSCORE;
 	case 39:
-		return current & ~FOREGROUND | stream->DefaultStyle & FOREGROUND;
+		return current & ~FOREGROUND | stream->State->DefaultStyle & FOREGROUND;
 	case 49:
-		return current & ~BACKGROUND | stream->DefaultStyle & BACKGROUND;
+		return current & ~BACKGROUND | stream->State->DefaultStyle & BACKGROUND;
 	case 30:
 		// Black.
 		return current & ~FOREGROUND;
@@ -386,94 +379,94 @@ static WORD GetColour(unsigned char attr, struct stream_s* const stream)
 	return current;
 }
 
-static void GetColours(struct stream_s * const stream)
+static void GetColours(struct console_colour_stream_s * const stream)
 {
-	switch (stream->Attr0)
+	switch (stream->State->Attr0)
 	{
 	case 0:
 		// Reset.
-		stream->DefaultStyle &= ~COMMON_LVB_REVERSE_VIDEO;
-		stream->CurrentStyle = stream->DefaultStyle;
+		stream->State->DefaultStyle &= ~COMMON_LVB_REVERSE_VIDEO;
+		stream->State->CurrentStyle = stream->State->DefaultStyle;
 		break;
 	case 38:
 		// Special foreground colour.
 		// TODO: Find the closest working colour from the 16 available.
-		switch (stream->Attr1)
+		switch (stream->State->Attr1)
 		{
 		case 5:
 			// 256 colours.
-			stream->CurrentStyle = stream->CurrentStyle & ~FOREGROUND | Make256Colour(stream->Attr2, stream);
+			stream->State->CurrentStyle = stream->State->CurrentStyle & ~FOREGROUND | Make256Colour(stream->State->Attr2, stream);
 			break;
 		case 2:
 			// 24-bit colours.
-			stream->CurrentStyle = stream->CurrentStyle & ~FOREGROUND | Make24Colour(stream->Attr2, stream->Attr3, stream->Attr4, stream);
+			stream->State->CurrentStyle = stream->State->CurrentStyle & ~FOREGROUND | Make24Colour(stream->State->Attr2, stream->State->Attr3, stream->State->Attr4, stream);
 			break;
 		}
 		break;
 	case 48:
 		// Special background colour.
-		switch (stream->Attr1)
+		switch (stream->State->Attr1)
 		{
 		case 5:
 			// 256 colours.
-			stream->CurrentStyle = stream->CurrentStyle & ~BACKGROUND | Make256Colour(stream->Attr2, stream) << 4;
+			stream->State->CurrentStyle = stream->State->CurrentStyle & ~BACKGROUND | Make256Colour(stream->State->Attr2, stream) << 4;
 			break;
 		case 2:
 			// 24-bit colours.
-			stream->CurrentStyle = stream->CurrentStyle & ~BACKGROUND | Make24Colour(stream->Attr2, stream->Attr3, stream->Attr4, stream) << 4;
+			stream->State->CurrentStyle = stream->State->CurrentStyle & ~BACKGROUND | Make24Colour(stream->State->Attr2, stream->State->Attr3, stream->State->Attr4, stream) << 4;
 			break;
 		}
 		break;
 	default:
 		// Normal code.
-		stream->CurrentStyle = GetColour(stream->Attr0, stream);
-		stream->CurrentStyle = GetColour(stream->Attr1, stream);
-		stream->CurrentStyle = GetColour(stream->Attr2, stream);
-		stream->CurrentStyle = GetColour(stream->Attr3, stream);
-		stream->CurrentStyle = GetColour(stream->Attr4, stream);
+		stream->State->CurrentStyle = GetColour(stream->State->Attr0, stream);
+		stream->State->CurrentStyle = GetColour(stream->State->Attr1, stream);
+		stream->State->CurrentStyle = GetColour(stream->State->Attr2, stream);
+		stream->State->CurrentStyle = GetColour(stream->State->Attr3, stream);
+		stream->State->CurrentStyle = GetColour(stream->State->Attr4, stream);
 		break;
 	}
 }
 
-static int RunStateMachine(wchar_t c, struct stream_s * const stream)
+static int RunStateMachine(wchar_t c, struct console_colour_stream_s * const stream)
 {
 	// Run the stream machine.
-	switch (stream->State)
+	switch (stream->State->State)
 	{
 	case STATE_NONE:
-		if (stream->Coloured)
+		if (stream->State->Coloured)
 		{
 			switch (c)
 			{
 			case 29: // '\x1D', Group separator.
-				return /*stream->*/OutputC(10, stream); // `\n`
+				return /*stream->State->*/OutputC(10, stream); // `\n`
 			case 31: // '\x1F', Unit separator.
-				return /*stream->*/OutputC(10, stream); // `\n`
+				return /*stream->State->*/OutputC(10, stream); // `\n`
 			case 30: // '\x1E', Record separator.
 				return 0;
 			}
 		}
 		if (c == '\x1B')
 		{
-			stream->State = STATE_ESC;
+			stream->State->State = STATE_ESC;
 			return 0;
 		}
-		else if ((c & stream->UnicodeMask))
+		else if ((c & stream->State->UnicodeMask))
 		{
 			// Start of a multi-byte character.  Skip all checks on the next one.
-			stream->State = STATE_SKIP;
+			stream->State->State = STATE_SKIP;
 		}
 		break;
 	case STATE_SKIP:
-		if (!(c & stream->UnicodeMask))
+		if (!(c & stream->State->UnicodeMask))
 		{
-			stream->State = STATE_NONE;
+			stream->State->State = STATE_NONE;
 		}
 		break;
 	case STATE_ESC:
 		if (c == '[')
 		{
-			stream->State = STATE_START;
+			stream->State->State = STATE_START;
 		}
 		else
 		{
@@ -484,8 +477,8 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_START:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr0 = (unsigned char)(c - '0');
-			stream->State = STATE_A00;
+			stream->State->Attr0 = (unsigned char)(c - '0');
+			stream->State->State = STATE_A00;
 		}
 		else
 		{
@@ -496,15 +489,15 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_A00:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr0 = stream->Attr0 * 10 + (unsigned char)(c - '0');
+			stream->State->Attr0 = stream->State->Attr0 * 10 + (unsigned char)(c - '0');
 		}
 		else if (c == ';')
-			stream->State = STATE_S0;
+			stream->State->State = STATE_S0;
 		//else if (c == ':')
-		//	stream->State = STATE_T416;
+		//	stream->State->State = STATE_T416;
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -516,12 +509,12 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_S0:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr1 = (unsigned char)(c - '0');
-			stream->State = STATE_A10;
+			stream->State->Attr1 = (unsigned char)(c - '0');
+			stream->State->State = STATE_A10;
 		}
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -533,13 +526,13 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_A10:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr1 = stream->Attr1 * 10 + (unsigned char)(c - '0');
+			stream->State->Attr1 = stream->State->Attr1 * 10 + (unsigned char)(c - '0');
 		}
 		else if (c == ';')
-			stream->State = STATE_S1;
+			stream->State->State = STATE_S1;
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -551,12 +544,12 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_S1:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr2 = (unsigned char)(c - '0');
-			stream->State = STATE_A20;
+			stream->State->Attr2 = (unsigned char)(c - '0');
+			stream->State->State = STATE_A20;
 		}
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -568,13 +561,13 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_A20:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr2 = stream->Attr2 * 10 + (unsigned char)(c - '0');
+			stream->State->Attr2 = stream->State->Attr2 * 10 + (unsigned char)(c - '0');
 		}
 		else if (c == ';')
-			stream->State = STATE_S2;
+			stream->State->State = STATE_S2;
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -586,12 +579,12 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_S2:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr3 = (unsigned char)(c - '0');
-			stream->State = STATE_A30;
+			stream->State->Attr3 = (unsigned char)(c - '0');
+			stream->State->State = STATE_A30;
 		}
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -603,13 +596,13 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_A30:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr3 = stream->Attr3 * 10 + (unsigned char)(c - '0');
+			stream->State->Attr3 = stream->State->Attr3 * 10 + (unsigned char)(c - '0');
 		}
 		else if (c == ';')
-			stream->State = STATE_S3;
+			stream->State->State = STATE_S3;
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -621,12 +614,12 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_S3:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr4 = (unsigned char)(c - '0');
-			stream->State = STATE_A40;
+			stream->State->Attr4 = (unsigned char)(c - '0');
+			stream->State->State = STATE_A40;
 		}
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -638,11 +631,11 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	case STATE_A40:
 		if ('0' <= c && c <= '9')
 		{
-			stream->Attr4 = stream->Attr4 * 10 + (unsigned char)(c - '0');
+			stream->State->Attr4 = stream->State->Attr4 * 10 + (unsigned char)(c - '0');
 		}
 		else if (c == 'm')
 		{
-			stream->State = STATE_DONE;
+			stream->State->State = STATE_DONE;
 			break;
 		}
 		else
@@ -652,15 +645,15 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 		}
 		return 0;
 	}
-	if (stream->State == STATE_DONE)
+	if (stream->State->State == STATE_DONE)
 	{
 		GetColours(stream);
-		stream->State = STATE_NONE;
-		stream->Attr0 = stream->Attr1 = stream->Attr2 = stream->Attr3 = stream->Attr4 = 0;
+		stream->State->State = STATE_NONE;
+		stream->State->Attr0 = stream->State->Attr1 = stream->State->Attr2 = stream->State->Attr3 = stream->State->Attr4 = 0;
 		return 0;
 	}
 	Colour(stream);
-	return /*stream->*/OutputC(c, stream);
+	return /*stream->State->*/OutputC(c, stream);
 }
 
 #if defined CONMD_HOOKS
@@ -671,7 +664,7 @@ static int RunStateMachine(wchar_t c, struct stream_s * const stream)
 	#define MAYBE_READD_HOOKS() ((void)0)
 #endif
 	
-int WriteColouredA(char const * s, int n, struct stream_s* const stream)
+int WriteColouredA(char const * s, int n, struct console_colour_stream_s* const stream)
 {
 	MAYBE_REMOVE_HOOKS();
 	char const
@@ -688,32 +681,32 @@ int WriteColouredA(char const * s, int n, struct stream_s* const stream)
 		ret = 0;
 	for (; ; )
 	{
-		while (*s && !(stream->State == STATE_NONE || stream->State == STATE_SKIP))
+		while (*s && !(stream->State->State == STATE_NONE || stream->State->State == STATE_SKIP))
 		{
 			RunStateMachine(*s++, stream);
 		}
 		char const *
 			esc = s;
-		if (stream->Coloured)
+		if (stream->State->Coloured)
 		{
 			for (cur = s; cur != end; ++cur)
 			{
 				switch (*cur)
 				{
 				case '\x1B': // ESC.
-					stream->State = STATE_ESC;
+					stream->State->State = STATE_ESC;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1D': // Group separator.
-					stream->State = STATE_EXTRA_NL;
+					stream->State->State = STATE_EXTRA_NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1F': // Unit separator.
-					stream->State = STATE_EXTRA_2NL;
+					stream->State->State = STATE_EXTRA_2NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1E': // Record separator.
-					stream->State = STATE_NONE;
+					stream->State->State = STATE_NONE;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				}
@@ -729,7 +722,7 @@ WriteColoured_loop_done:
 			esc = strchr(s, '\x1B');
 			if (esc == NULL)
 				break;
-			stream->State = STATE_ESC;
+			stream->State->State = STATE_ESC;
 		}
 		// Write the bit before the escape sequence.
 		if (esc != s)
@@ -746,7 +739,7 @@ WriteColoured_loop_done:
 			}
 		}
 		s = esc + 1;
-		switch (stream->State)
+		switch (stream->State->State)
 		{
 		case STATE_EXTRA_2NL:
 			OutputC(10, stream);
@@ -759,7 +752,7 @@ WriteColoured_loop_done:
 		default:
 			continue;
 		}
-		stream->State = STATE_NONE;
+		stream->State->State = STATE_NONE;
 	}
 	// Restore the correct colours.
 	Colour(stream);
@@ -769,7 +762,7 @@ WriteColoured_loop_done:
 	return (int)(s - start + wrote);
 }
 
-int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
+int WriteColouredW(wchar_t const * s, int n, struct console_colour_stream_s* const stream)
 {
 	MAYBE_REMOVE_HOOKS();
 	wchar_t const
@@ -786,32 +779,32 @@ int WriteColouredW(wchar_t const * s, int n, struct stream_s* const stream)
 		ret = 0;
 	for (; ; )
 	{
-		while (*s && !(stream->State == STATE_NONE || stream->State == STATE_SKIP))
+		while (*s && !(stream->State->State == STATE_NONE || stream->State->State == STATE_SKIP))
 		{
 			RunStateMachine(*s++, stream);
 		}
 		wchar_t const *
 			esc = s;
-		if (stream->Coloured)
+		if (stream->State->Coloured)
 		{
 			for (cur = s; cur != end; ++cur)
 			{
 				switch (*cur)
 				{
 				case '\x1B': // ESC.
-					stream->State = STATE_ESC;
+					stream->State->State = STATE_ESC;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1D': // Group separator.
-					stream->State = STATE_EXTRA_NL;
+					stream->State->State = STATE_EXTRA_NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1F': // Unit separator.
-					stream->State = STATE_EXTRA_2NL;
+					stream->State->State = STATE_EXTRA_2NL;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				case '\x1E': // Record separator.
-					stream->State = STATE_NONE;
+					stream->State->State = STATE_NONE;
 					esc = cur;
 					goto WriteColoured_loop_done;
 				}
@@ -827,7 +820,7 @@ WriteColoured_loop_done:
 			esc = wcschr(s, '\x1B');
 			if (esc == NULL)
 				break;
-			stream->State = STATE_ESC;
+			stream->State->State = STATE_ESC;
 		}
 		// Write the bit before the escape sequence.
 		if (esc != s)
@@ -844,7 +837,7 @@ WriteColoured_loop_done:
 			}
 		}
 		s = esc + 1;
-		switch (stream->State)
+		switch (stream->State->State)
 		{
 		case STATE_EXTRA_2NL:
 			OutputC(10, stream);
@@ -857,7 +850,7 @@ WriteColoured_loop_done:
 		default:
 			continue;
 		}
-		stream->State = STATE_NONE;
+		stream->State->State = STATE_NONE;
 	}
 	// Restore the correct colours.
 	Colour(stream);

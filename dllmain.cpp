@@ -7,6 +7,46 @@
 
 #define CONSOLECOLOUR_API __declspec(dllexport)
 
+static int OutputC_Console(void* data, wchar_t c, struct console_colour_stream_s* const stream)
+{
+	return WriteConsoleW(data, &c, 1, NULL, NULL) ? 1 : 0;
+}
+
+static int OutputA_Console(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
+{
+	DWORD
+		ret = 0;
+	WriteConsoleA(data, c, len, &ret, NULL);
+	return ret;
+}
+
+static int OutputW_Console(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
+{
+	DWORD
+		ret = 0;
+	WriteConsoleW(data, c, len, &ret, NULL);
+	return ret;
+}
+
+static void OutputColour_Console(void* data, unsigned short colour, struct console_colour_stream_s* const stream)
+{
+	SetConsoleTextAttribute(data, colour);
+}
+
+static struct console_colour_call_s
+	gConsoleStreamCall = {
+		&OutputC_Console,
+		&OutputA_Console,
+		&OutputW_Console,
+		&OutputColour_Console,
+	};
+
+static struct console_colour_stream_s
+	gStream = {
+		&gConsoleStreamCall,
+		&gConsoleStreamState,
+	};
+
 extern "C"
 {
 	BOOL
@@ -27,7 +67,7 @@ extern "C"
 			}
 			return TRUE;
 		}
-		gStream.Handle = hConsoleOutput;
+		gStream.Call->Data = hConsoleOutput;
 		int
 			num = WriteColouredA((char const*)lpBuffer, nNumberOfCharsToWrite, &gStream);
 		if (lpNumberOfCharsWritten)
@@ -35,11 +75,6 @@ extern "C"
 			*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
 		}
 		return TRUE;
-		//if (lpNumberOfCharsWritten)
-		//{
-		//	*lpNumberOfCharsWritten = num;
-		//}
-		//return num != 0;
 	}
 
 	BOOL
@@ -60,7 +95,7 @@ extern "C"
 			}
 			return TRUE;
 		}
-		gStream.Handle = hConsoleOutput;
+		gStream.Call->Data = hConsoleOutput;
 		int
 			num = WriteColouredW((wchar_t const*)lpBuffer, nNumberOfCharsToWrite, &gStream);
 		if (lpNumberOfCharsWritten)
@@ -68,11 +103,6 @@ extern "C"
 			*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
 		}
 		return TRUE;
-		//if (lpNumberOfCharsWritten)
-		//{
-		//	*lpNumberOfCharsWritten = num;
-		//}
-		//return num != 0;
 	}
 
 	subhook_t
@@ -99,7 +129,7 @@ extern "C"
 			handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 		GetConsoleScreenBufferInfo(handle, &info);
-		gStream.CurrentStyle = gStream.DefaultStyle = info.wAttributes;
+		gStream.State->CurrentStyle = gStream.State->DefaultStyle = info.wAttributes;
 
 		if (!WriteConsoleA_)
 		{
@@ -123,7 +153,7 @@ extern "C"
 	{
 		HANDLE
 			handle = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(handle, gStream.DefaultStyle);
+		SetConsoleTextAttribute(handle, gStream.State->DefaultStyle);
 		if (WriteConsoleA_)
 		{
 			subhook_remove(WriteConsoleA_);

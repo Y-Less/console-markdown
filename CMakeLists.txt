@@ -15,6 +15,8 @@ add_library(console-markdown STATIC
 	StringUtils.cpp
 	StringUtils.hpp
 	ConsoleRenderer.cpp
+	console-colour.h
+	console-colour.c
 	parsers/pawn.cpp
 	parsers/cpp.cpp
 	include/console-markdown/CPP.hpp
