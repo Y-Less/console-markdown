@@ -106,7 +106,13 @@ public:
 		handle_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE))
 	{
 		src_->rdbuf(this);
-		InitStreamHooks();
+		CONSOLE_SCREEN_BUFFER_INFO
+			info;
+		HANDLE
+			handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+		GetConsoleScreenBufferInfo(handle, &info);
+		gStream.CurrentStyle = gStream.DefaultStyle = info.wAttributes;
 	}
 
 	// dest
@@ -116,6 +122,9 @@ public:
 		{
 			src_->rdbuf(&buffer_);
 		}
+		HANDLE
+			handle = GetStdHandle(STD_OUTPUT_HANDLE);
+		SetConsoleTextAttribute(handle, gStream.DefaultStyle);
 	}
 #else
 	// cons

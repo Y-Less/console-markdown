@@ -9,8 +9,6 @@
 
 extern "C"
 {
-#ifdef CONMD_WINDOWS
-
 	BOOL
 		WINAPI
 		Hook_WriteConsoleA(
@@ -81,7 +79,19 @@ extern "C"
 		WriteConsoleA_ = 0,
 		WriteConsoleW_ = 0;
 
-	void InitStreamHooks()
+	void RemoveStreamHooks()
+	{
+		subhook_remove(WriteConsoleA_);
+		subhook_remove(WriteConsoleW_);
+	}
+
+	void ReaddStreamHooks()
+	{
+		subhook_install(WriteConsoleW_);
+		subhook_install(WriteConsoleA_);
+	}
+
+	CONSOLECOLOUR_API void InstallConsoleColour(void)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO
 			info;
@@ -109,7 +119,7 @@ extern "C"
 		}
 	}
 
-	void DeinitStreamHooks()
+	CONSOLECOLOUR_API void UninstallConsoleColour(void)
 	{
 		HANDLE
 			handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -126,48 +136,6 @@ extern "C"
 			subhook_free(WriteConsoleW_);
 			WriteConsoleW_ = 0;
 		}
-	}
-
-	void RemoveStreamHooks()
-	{
-		subhook_remove(WriteConsoleA_);
-		subhook_remove(WriteConsoleW_);
-	}
-
-	void ReaddStreamHooks()
-	{
-		subhook_install(WriteConsoleW_);
-		subhook_install(WriteConsoleA_);
-	}
-
-#else
-
-	void InitStreamHooks()
-	{
-	}
-
-	void DeinitStreamHooks()
-	{
-	}
-
-	void RemoveStreamHooks()
-	{
-	}
-
-	void ReaddStreamHooks()
-	{
-	}
-
-#endif
-
-	CONSOLECOLOUR_API void InstallConsoleColour(void)
-	{
-		InitStreamHooks();
-	}
-
-	CONSOLECOLOUR_API void UninstallConsoleColour(void)
-	{
-		DeinitStreamHooks();
 	}
 }
 

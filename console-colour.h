@@ -76,10 +76,8 @@ struct stream_s
 extern struct stream_s
 	gStream;
 
-void InitStreamHooks();
-void DeinitStreamHooks();
 void ReaddStreamHooks();
-void InitStreamHooks();
+void RemoveStreamHooks();
 
 int WriteColouredW(wchar_t const* s, int n, struct stream_s* const stream);
 int WriteColouredA(char const* s, int n, struct stream_s* const stream);
