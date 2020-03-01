@@ -26,7 +26,6 @@ add_library(console-markdown STATIC
 	libsoldout/buffer.h
 	libsoldout/markdown.c
 	libsoldout/markdown.h
-	subhook/subhook.c
 )
 
 set_target_properties(console-markdown PROPERTIES VERSION ${PROJECT_VERSION})
