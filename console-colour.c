@@ -169,77 +169,40 @@ static WORD NToColour(unsigned char attr)
 	return 0;
 }
 
-static WORD Make24Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
+static unsigned char Shuffle6Colour(unsigned char colour)
 {
-	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
-	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
-	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
-	// matters.
-	const int
-		CONSOLE_COLOURS[16][3] = {
-			{0, 0, 0},
-			{85, 0, 0},
-			{0, 85, 0},
-			{85, 85, 0},
-			{0, 0, 85},
-			{85, 0, 85},
-			{0, 85, 85},
-			{171, 171, 171},
-			{85, 85, 85},
-			{171, 0, 0},
-			{0, 171, 0},
-			{171, 171, 0},
-			{0, 0, 171},
-			{171, 0, 171},
-			{0, 171, 171},
-			{255, 255, 255},
-	};
-
-	int
-		dist = INT_MAX;
-	unsigned char
-		found = 0;
-	for (unsigned char i = 0; i != 16; ++i)
-	{
-		int
-			tr = (int)r - CONSOLE_COLOURS[i][0],
-			tg = (int)g - CONSOLE_COLOURS[i][1],
-			tb = (int)b - CONSOLE_COLOURS[i][2],
-			cur = (tr * tr) + (tg * tg) + (tb * tb);
-		if (cur < dist)
-		{
-			dist = cur;
-			found = i;
-		}
-	}
-
-	return NToColour(found);
+	// The search results are better using a different search order.
+	const unsigned char
+		ORDER[16] = { 0, 15, 1, 2, 4, 3, 6, 5, 9, 10, 12, 11, 14, 13, 8, 7 };
+	return ORDER[colour];
 }
 
-static WORD Make6Colour(unsigned char r, unsigned char g, unsigned char b, struct stream_s* const stream)
+static WORD Make6Colour(int r, int g, int b, struct stream_s* const stream)
 {
 	// There's no easy way to map 16 colours to 3 components.  So we need full colour space mapping.
 	// I didn't want to have to write that...  I KNOW there are better mapping functions based on
 	// what colours are eyes are better at perceiving, but I'm only mapping to 16 so it hardly
 	// matters.
+	//
+	// I did a LOT of experimenting with orders to get this as the best order I could find.
 	const int
 		CONSOLE_COLOURS[16][3] = {
 			{0, 0, 0},
+			{5, 5, 5},
 			{2, 0, 0},
 			{0, 2, 0},
-			{2, 2, 0},
 			{0, 0, 2},
-			{2, 0, 2},
+			{2, 2, 0},
 			{0, 2, 2},
-			{4, 4, 4},
-			{2, 2, 2},
+			{2, 0, 2},
 			{4, 0, 0},
 			{0, 4, 0},
-			{4, 4, 0},
 			{0, 0, 4},
-			{4, 0, 4},
+			{4, 4, 0},
 			{0, 4, 4},
-			{6, 6, 6},
+			{4, 0, 4},
+			{2, 2, 2},
+			{4, 4, 4},
 	};
 
 	int
@@ -249,9 +212,9 @@ static WORD Make6Colour(unsigned char r, unsigned char g, unsigned char b, struc
 	for (unsigned char i = 0; i != 16; ++i)
 	{
 		int
-			tr = (int)r - CONSOLE_COLOURS[i][0],
-			tg = (int)g - CONSOLE_COLOURS[i][1],
-			tb = (int)b - CONSOLE_COLOURS[i][2],
+			tr = r - CONSOLE_COLOURS[i][0],
+			tg = g - CONSOLE_COLOURS[i][1],
+			tb = b - CONSOLE_COLOURS[i][2],
 			cur = (tr * tr) + (tg * tg) + (tb * tb);
 		if (cur < dist)
 		{
@@ -260,7 +223,16 @@ static WORD Make6Colour(unsigned char r, unsigned char g, unsigned char b, struc
 		}
 	}
 
-	return NToColour(found);
+	return NToColour(Shuffle6Colour(found));
+}
+
+static WORD Make24Colour(int r, int g, int b, struct stream_s* const stream)
+{
+	// Use the reduced 6-value colour space mapping, since we've tweaked that a lot already.
+	r = r + 25 / 51; // Rounding division, to get the component from 0-5 (inclusive).
+	g = g + 25 / 51; // Rounding division, to get the component from 0-5 (inclusive).
+	b = b + 25 / 51; // Rounding division, to get the component from 0-5 (inclusive).
+	return Make6Colour(r, g, b, stream);
 }
 
 static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
@@ -279,13 +251,9 @@ static WORD Make256Colour(unsigned char attr, struct stream_s * const stream)
 		// 216 colours.  Extract the RGB from the colour.  Then scale them to 8-bit.
 		attr -= 16;
 		unsigned char
-			r = attr / 36;
-		attr -= r * 36;
-		unsigned char
-			g = attr / 6;
-		attr -= g * 6;
-		unsigned char
-			b = attr;
+			r = attr / 36,
+			g = attr % 36 / 6,
+			b = attr % 6;
 		return Make6Colour(r, g, b, stream);
 	}
 
