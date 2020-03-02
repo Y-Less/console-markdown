@@ -99,7 +99,7 @@ public:
 
 #ifdef CONMD_WINDOWS
 	// cons
-	ColouredBuffer(ostream_type & src, bool coloured, bool err)
+	ColouredBuffer(ostream_type & src, bool coloured, bool err = false)
 	:
 		buffer_(*src.rdbuf()),
 		coloured_(coloured),
