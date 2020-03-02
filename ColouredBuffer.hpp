@@ -157,7 +157,7 @@ public:
 #ifdef CONMD_WINDOWS
 		char_type
 			s = (char_type)c;
-		return (int)WriteColouredX<char_type>(&s, 1);
+		return (int_type)WriteColouredX<char_type>(&s, 1);
 #else
 		return buffer_.sputc(c);
 #endif
@@ -167,7 +167,7 @@ protected:
 	size_type xsputn(char_type const * s, size_type n) override
 	{
 #ifdef CONMD_WINDOWS
-		return (int)WriteColouredX<char_type>(s, n);
+		return (size_type)WriteColouredX<char_type>(s, n);
 #else
 		return buffer_.sputn(s, n);
 #endif
