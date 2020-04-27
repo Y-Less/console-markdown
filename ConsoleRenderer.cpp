@@ -6,6 +6,7 @@ extern "C"
 #include <stack>
 #include <iostream>
 #include <string>
+#include <cstring>
 
 #include "ColouredBuffer.hpp"
 #include "include/console-markdown/CMDMD.hpp"

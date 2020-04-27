@@ -10,10 +10,7 @@ extern "C"
 {
 #endif
 
-#ifdef CONMD_WINDOWS
-
-#include <Windows.h>
-#include <stdbool.h>
+#include <stddef.h>
 
 enum STATE_E
 {
@@ -35,6 +32,11 @@ enum STATE_E
 	STATE_EXTRA_SPACE, // Insert one extra space.
 	STATE_SKIP,        // Multi-byte character.
 };
+
+#ifdef CONMD_WINDOWS
+
+#include <Windows.h>
+#include <stdbool.h>
 
 struct console_colour_stream_s;
 
@@ -94,6 +96,15 @@ struct console_colour_stream_s
 };
 
 #else
+
+struct console_colour_state_s
+{
+	wchar_t
+		UnicodeMask;
+
+	enum STATE_E
+		State;
+};
 
 // Empty, just to exist.
 struct console_colour_stream_s

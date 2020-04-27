@@ -12,4 +12,5 @@
 /console-markdown-test.dir
 /cmake_install.cmake
 /Makefile
+build/
 

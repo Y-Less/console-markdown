@@ -3,8 +3,7 @@
 struct console_colour_state_s
 	gConsoleStreamState = {
 		0x80,
-		STATE_NONE,
-		//true,
+		STATE_NONE
 };
 
 #ifdef CONMD_WINDOWS
