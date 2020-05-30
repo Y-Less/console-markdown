@@ -1,6 +1,10 @@
 #include <console-markdown/CMDMD.hpp>
 #include <iostream>
-#include <windows.h>
+
+#ifdef CONMD_WINDOWS
+    #include <windows.h>
+#endif 
+
 #include "subhook/subhook.h"
 
 using namespace cmdmd::Literals;
