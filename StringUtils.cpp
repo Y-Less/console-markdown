@@ -22,5 +22,5 @@ namespace cmdmd
 
 		source.swap(newString);
 	}
-};
+}
 

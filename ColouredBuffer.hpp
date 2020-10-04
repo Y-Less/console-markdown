@@ -197,7 +197,7 @@ template class ColouredBuffer<wchar_t>;
 #ifdef CONMD_WINDOWS
 	#pragma warning(pop)
 #endif
-};
+}
 
 
 

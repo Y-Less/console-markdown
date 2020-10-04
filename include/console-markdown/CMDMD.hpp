@@ -23,5 +23,5 @@ namespace cmdmd
 		std::string
 			operator "" _md(char const * s, size_t len);
 	}
-};
+}
 

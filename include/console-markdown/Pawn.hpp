@@ -12,5 +12,5 @@ namespace cmdmd
 		std::string
 			operator "" _pawn_syntax(char const * s, size_t len);
 	}
-};
+}
 
