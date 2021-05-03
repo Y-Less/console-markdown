@@ -149,7 +149,6 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 			std::string
 				out = cmdmd::CPP(std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
-			bufputc(ob, '\n');
 			return;
 		}
 		else if (!strncmp(name, "pawn", 3))
@@ -161,7 +160,6 @@ void rndr_fencedcode(struct buf *ob, struct buf *text, char *name, size_t namele
 			std::string
 				out = cmdmd::Pawn(std::string(text->data, text->size));
 			bufput(ob, out.c_str(), out.length());
-			bufputc(ob, '\n');
 			return;
 		}
 	}
@@ -339,6 +337,7 @@ static void
 				bufput(ob, start, diff);
 				rem = width - diff;
 			}
+			bufputc(ob, ' ');
 			start = end + 1;
 		}
 		if (len)

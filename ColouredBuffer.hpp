@@ -105,16 +105,16 @@ public:
 		coloured_(coloured),
 		src_(&src),
 		handle_(GetStdHandle(err ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE)),
+		stream_{
+			&call_,
+			&gConsoleStreamState,
+		},
 		call_{
 			&OutputC,
 			&OutputA,
 			&OutputW,
 			&OutputColour,
 			(void *)this
-		},
-		stream_{
-			&call_,
-			&gConsoleStreamState,
 		}
 	{
 		src_->rdbuf(this);
