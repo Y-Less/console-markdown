@@ -29,6 +29,7 @@ void
 }
 
 #ifdef CONMD_WINDOWS
+	template <>
 	int
 		ColouredBuffer<char>::
 		OutputC(void* data, wchar_t c, struct console_colour_stream_s* const stream)
@@ -38,6 +39,7 @@ void
 		return ptr->buffer_.sputc((char)c) != std::char_traits<char>::eof();
 	}
 
+	template <>
 	int
 		ColouredBuffer<char>::
 		OutputA(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
@@ -47,6 +49,7 @@ void
 		return (int)ptr->buffer_.sputn(c, len);
 	}
 
+	template <>
 	int
 		ColouredBuffer<char>::
 		OutputW(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
@@ -55,6 +58,7 @@ void
 		return 0;
 	}
 
+	template <>
 	void
 		ColouredBuffer<char>::
 		OutputColour(void* data, unsigned short colour, struct console_colour_stream_s* const stream)
@@ -67,6 +71,7 @@ void
 		}
 	}
 
+	template <>
 	int
 		ColouredBuffer<wchar_t>::
 		OutputC(void* data, wchar_t c, struct console_colour_stream_s* const stream)
@@ -76,6 +81,7 @@ void
 		return ptr->buffer_.sputc(c) != std::char_traits<wchar_t>::eof();
 	}
 
+	template <>
 	int
 		ColouredBuffer<wchar_t>::
 		OutputA(void* data, char const* c, int len, struct console_colour_stream_s* const stream)
@@ -84,6 +90,7 @@ void
 		return 0;
 	}
 
+	template <>
 	int
 		ColouredBuffer<wchar_t>::
 		OutputW(void* data, wchar_t const* c, int len, struct console_colour_stream_s* const stream)
@@ -93,6 +100,7 @@ void
 		return (int)ptr->buffer_.sputn(c, len);
 	}
 
+	template <>
 	void
 		ColouredBuffer<wchar_t>::
 		OutputColour(void* data, unsigned short colour, struct console_colour_stream_s* const stream)
