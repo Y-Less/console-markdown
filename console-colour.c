@@ -36,7 +36,7 @@ static void Colour(struct console_colour_stream_s * const stream)
 	//else
 	if (stream->State->DefaultStyle & COMMON_LVB_REVERSE_VIDEO)
 	{
-		stream->Call->OutputColour(stream->Call->Data, stream->State->CurrentStyle >> 4 & 0x0F | stream->State->CurrentStyle << 4 & 0xF0, stream);
+		stream->Call->OutputColour(stream->Call->Data, ((stream->State->CurrentStyle >> 4) & 0x0F) | ((stream->State->CurrentStyle << 4) & 0xF0), stream);
 	}
 	else
 	{
@@ -197,8 +197,9 @@ static WORD Make6Colour(int r, int g, int b, struct console_colour_stream_s* con
 	int
 		dist = INT_MAX;
 	unsigned char
+		i,
 		found = 0;
-	for (unsigned char i = 0; i != 16; ++i)
+	for (i = 0; i != 16; ++i)
 	{
 		int
 			tr = r - CONSOLE_COLOURS[i][0],
@@ -256,9 +257,9 @@ static WORD GetColour(unsigned char attr, struct console_colour_stream_s* const 
 	switch (attr)
 	{
 	case 1:
-		return current | FOREGROUND_INTENSITY;
+		return (current | FOREGROUND_INTENSITY);
 	case 2:
-		return current & ~FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND_INTENSITY);
 	case 3:
 	case 7:
 		// Inverse.  Store the fact that it is inverted somewhere, and only apply it at the very
@@ -271,111 +272,111 @@ static WORD GetColour(unsigned char attr, struct console_colour_stream_s* const 
 		break;
 	case 4:
 	case 21:
-		return current | COMMON_LVB_UNDERSCORE;
+		return (current | COMMON_LVB_UNDERSCORE);
 	case 22:
-		return current & ~FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND_INTENSITY);
 	case 24:
-		return current & ~COMMON_LVB_UNDERSCORE;
+		return (current & ~COMMON_LVB_UNDERSCORE);
 	case 39:
-		return current & ~FOREGROUND | stream->State->DefaultStyle & FOREGROUND;
+		return (current & ~FOREGROUND) | (stream->State->DefaultStyle & FOREGROUND);
 	case 49:
-		return current & ~BACKGROUND | stream->State->DefaultStyle & BACKGROUND;
+		return (current & ~BACKGROUND) | (stream->State->DefaultStyle & BACKGROUND);
 	case 30:
 		// Black.
-		return current & ~FOREGROUND;
+		return (current & ~FOREGROUND);
 	case 31:
 		// Red.
-		return current & ~FOREGROUND | FOREGROUND_RED;
+		return (current & ~FOREGROUND) | FOREGROUND_RED;
 	case 32:
 		// Green.
-		return current & ~FOREGROUND | FOREGROUND_GREEN;
+		return (current & ~FOREGROUND) | FOREGROUND_GREEN;
 	case 33:
 		// Yellow.
-		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN;
+		return (current & ~FOREGROUND) | FOREGROUND_RED | FOREGROUND_GREEN;
 	case 34:
 		// Blue.
-		return current & ~FOREGROUND | FOREGROUND_BLUE;
+		return (current & ~FOREGROUND) | FOREGROUND_BLUE;
 	case 35:
 		// Magenta.
-		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_BLUE;
+		return (current & ~FOREGROUND) | FOREGROUND_RED | FOREGROUND_BLUE;
 	case 36:
 		// Cyan.
-		return current & ~FOREGROUND | FOREGROUND_GREEN | FOREGROUND_BLUE;
+		return (current & ~FOREGROUND) | FOREGROUND_GREEN | FOREGROUND_BLUE;
 	case 37:
 		// White.
-		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+		return (current & ~FOREGROUND) | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 	case 40:
 		// Black.
-		return current & ~BACKGROUND;
+		return (current & ~BACKGROUND);
 	case 41:
 		// Red.
-		return current & ~BACKGROUND | BACKGROUND_RED;
+		return (current & ~BACKGROUND) | BACKGROUND_RED;
 	case 42:
 		// Green.
-		return current & ~BACKGROUND | BACKGROUND_GREEN;
+		return (current & ~BACKGROUND) | BACKGROUND_GREEN;
 	case 43:
 		// Yellow.
-		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN;
+		return (current & ~BACKGROUND) | BACKGROUND_RED | BACKGROUND_GREEN;
 	case 44:
 		// Blue.
-		return current & ~BACKGROUND | BACKGROUND_BLUE;
+		return (current & ~BACKGROUND) | BACKGROUND_BLUE;
 	case 45:
 		// Magenta.
-		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_BLUE;
+		return (current & ~BACKGROUND) | BACKGROUND_RED | BACKGROUND_BLUE;
 	case 46:
 		// Cyan.
-		return current & ~BACKGROUND | BACKGROUND_GREEN | BACKGROUND_BLUE;
+		return (current & ~BACKGROUND) | BACKGROUND_GREEN | BACKGROUND_BLUE;
 	case 47:
 		// White.
-		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
+		return (current & ~BACKGROUND) | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
 	case 60 + 30:
 		// Black.
-		return current & ~FOREGROUND | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_INTENSITY;
 	case 60 + 31:
 		// Red.
-		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_RED | FOREGROUND_INTENSITY;
 	case 60 + 32:
 		// Green.
-		return current & ~FOREGROUND | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
 	case 60 + 33:
 		// Yellow.
-		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
 	case 60 + 34:
 		// Blue.
-		return current & ~FOREGROUND | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 	case 60 + 35:
 		// Magenta.
-		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 	case 60 + 36:
 		// Cyan.
-		return current & ~FOREGROUND | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 	case 60 + 37:
 		// White.
-		return current & ~FOREGROUND | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		return (current & ~FOREGROUND) | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 	case 60 + 40:
 		// Black.
-		return current & ~BACKGROUND | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_INTENSITY;
 	case 60 + 41:
 		// Red.
-		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_RED | BACKGROUND_INTENSITY;
 	case 60 + 42:
 		// Green.
-		return current & ~BACKGROUND | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
 	case 60 + 43:
 		// Yellow.
-		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
 	case 60 + 44:
 		// Blue.
-		return current & ~BACKGROUND | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	case 60 + 45:
 		// Magenta.
-		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	case 60 + 46:
 		// Cyan.
-		return current & ~BACKGROUND | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	case 60 + 47:
 		// White.
-		return current & ~BACKGROUND | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+		return (current & ~BACKGROUND) | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	}
 	return current;
 }
@@ -396,11 +397,11 @@ static void GetColours(struct console_colour_stream_s * const stream)
 		{
 		case 5:
 			// 256 colours.
-			stream->State->CurrentStyle = stream->State->CurrentStyle & ~FOREGROUND | Make256Colour(stream->State->Attr2, stream);
+			stream->State->CurrentStyle = (stream->State->CurrentStyle & ~FOREGROUND) | (Make256Colour(stream->State->Attr2, stream));
 			break;
 		case 2:
 			// 24-bit colours.
-			stream->State->CurrentStyle = stream->State->CurrentStyle & ~FOREGROUND | Make24Colour(stream->State->Attr2, stream->State->Attr3, stream->State->Attr4, stream);
+			stream->State->CurrentStyle = (stream->State->CurrentStyle & ~FOREGROUND) | (Make24Colour(stream->State->Attr2, stream->State->Attr3, stream->State->Attr4, stream));
 			break;
 		}
 		break;
@@ -410,11 +411,11 @@ static void GetColours(struct console_colour_stream_s * const stream)
 		{
 		case 5:
 			// 256 colours.
-			stream->State->CurrentStyle = stream->State->CurrentStyle & ~BACKGROUND | Make256Colour(stream->State->Attr2, stream) << 4;
+			stream->State->CurrentStyle = (stream->State->CurrentStyle & ~BACKGROUND) | (Make256Colour(stream->State->Attr2, stream) << 4);
 			break;
 		case 2:
 			// 24-bit colours.
-			stream->State->CurrentStyle = stream->State->CurrentStyle & ~BACKGROUND | Make24Colour(stream->State->Attr2, stream->State->Attr3, stream->State->Attr4, stream) << 4;
+			stream->State->CurrentStyle = (stream->State->CurrentStyle & ~BACKGROUND) | (Make24Colour(stream->State->Attr2, stream->State->Attr3, stream->State->Attr4, stream) << 4);
 			break;
 		}
 		break;
@@ -645,6 +646,12 @@ static int RunStateMachine(wchar_t c, struct console_colour_stream_s * const str
 			break;
 		}
 		return 0;
+	case STATE_DONE:
+	case STATE_EXTRA_NL:
+	case STATE_EXTRA_2NL:
+	case STATE_EXTRA_SPACE:
+		// So they aren't unhandled.
+		break;
 	}
 	if (stream->State->State == STATE_DONE)
 	{
